@@ -16,8 +16,8 @@ $terminationStrategy = new \Tebru\Executioner\Strategy\Termination\AttemptBound(
 $logger = new \Tebru\Executioner\Logger\ExceptionLogger(new Psr\Log\NullLogger(), Psr\LogLevel::ERROR, 'My custom error message');
 
 $executorFactory = new \Tebru\Executioner\Factory\ExecutorFactory();
-$executor = $executorFactor->make($attemptor, $logger, $waitStrategy, $terminationStrategy);
-$executor->execute();
+$executor = $executorFactor->make($waitStrategy, $terminationStrategy);
+$executor->execute($attemptor, $logger);
 ```
 
 ### Exception Delegator

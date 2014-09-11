@@ -14,7 +14,7 @@ use Tebru\Executioner\Delegate\DelegateException;
 use Tebru\Executioner\Executor;
 use Tebru\Executioner\Strategy\TerminationStrategy;
 use Tebru\Executioner\Strategy\WaitStrategy;
-use Tebru\Logger\ExceptionLogger;
+use Tebru\Executioner\Logger\ExceptionLogger;
 use UnexpectedValueException;
 
 /**
@@ -36,13 +36,8 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $termination = $this->mockTerminationStrategy();
         $termination->shouldReceive('start')->once();
 
-        $executor = new Executor(
-            $attemptor,
-            $this->mockExceptionLogger(),
-            $this->mockWaitStrategy(),
-            $termination
-        );
-        $executor->execute();
+        $executor = new Executor($this->mockWaitStrategy(), $termination);
+        $executor->execute($attemptor, $this->mockExceptionLogger());
     }
 
     public function testExceptionNoStrategy()
@@ -65,8 +60,8 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $logger->shouldReceive('getLogLevel')->once();
         $logger->shouldReceive('getErrorMessage')->once();
 
-        $executor = new Executor($attemptor, $logger, $this->mockWaitStrategy(), $termination);
-        $executor->execute();
+        $executor = new Executor($this->mockWaitStrategy(), $termination);
+        $executor->execute($attemptor, $logger);
     }
 
     public function testExceptionOneRetry()
@@ -93,8 +88,8 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $logger->shouldReceive('getLogLevel')->once();
         $logger->shouldReceive('getErrorMessage')->twice();
 
-        $executor = new Executor($attemptor, $logger, $wait, $termination);
-        $executor->execute();
+        $executor = new Executor($wait, $termination);
+        $executor->execute($attemptor, $logger);
     }
 
     public function testExceptionRetryWithHandler()
@@ -123,8 +118,8 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $logger->shouldReceive('getLogLevel')->once();
         $logger->shouldReceive('getErrorMessage')->twice();
 
-        $executor = new Executor($attemptor, $logger, $wait, $termination);
-        $executor->execute();
+        $executor = new Executor($wait, $termination);
+        $executor->execute($attemptor, $logger);
     }
 
     public function testExceptionOneRetryOneSuccess()
@@ -148,8 +143,8 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $logger->shouldReceive('info')->once()->withAnyArgs();
         $logger->shouldReceive('getErrorMessage')->once();
 
-        $executor = new Executor($attemptor, $logger, $wait, $termination);
-        $executor->execute();
+        $executor = new Executor($wait, $termination);
+        $executor->execute($attemptor, $logger);
     }
 
     public function testExceptionSkipRetry()
@@ -168,8 +163,8 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $logger->shouldReceive('error')->once()->withAnyArgs();
         $logger->shouldReceive('getErrorMessage')->once();
 
-        $executor = new Executor($attemptor, $logger, $this->mockWaitStrategy(), $termination);
-        $executor->execute();
+        $executor = new Executor($this->mockWaitStrategy(), $termination);
+        $executor->execute($attemptor, $logger);
     }
 
     /**
@@ -194,8 +189,8 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $logger->shouldReceive('error')->once()->withAnyArgs();
         $logger->shouldReceive('getErrorMessage')->once();
 
-        $executor = new Executor($attemptor, $logger, $this->mockWaitStrategy(), $termination);
-        $executor->execute();
+        $executor = new Executor($this->mockWaitStrategy(), $termination);
+        $executor->execute($attemptor, $logger);
     }
 
     /**
@@ -211,8 +206,8 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $termination->shouldReceive('start')->once();
         $termination->shouldReceive('addAttempt')->once();
 
-        $executor = new Executor($attemptor, $this->mockExceptionLogger(), $this->mockWaitStrategy(), $termination);
-        $executor->execute();
+        $executor = new Executor($this->mockWaitStrategy(), $termination);
+        $executor->execute($attemptor, $this->mockExceptionLogger());
     }
 
     private function mockAttemptor()

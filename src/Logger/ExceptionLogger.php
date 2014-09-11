@@ -3,7 +3,7 @@
  * File ExceptionLogger.php
  */
 
-namespace Tebru\Logger;
+namespace Tebru\Executioner\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;

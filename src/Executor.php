@@ -9,7 +9,7 @@ use Exception;
 use Tebru\Executioner\Exception\TypeMismatchException;
 use Tebru\Executioner\Strategy\TerminationStrategy;
 use Tebru\Executioner\Strategy\WaitStrategy;
-use Tebru\Logger\ExceptionLogger;
+use Tebru\Executioner\Logger\ExceptionLogger;
 
 /**
  * Class Executor
@@ -54,19 +54,13 @@ class Executor
     /**
      * Constructor
      *
-     * @param Attemptor $attemptor
-     * @param ExceptionLogger $logger
      * @param WaitStrategy $waitStrategy
      * @param TerminationStrategy $terminationStrategy
      */
     public function __construct(
-        Attemptor $attemptor,
-        ExceptionLogger $logger,
         WaitStrategy $waitStrategy,
         TerminationStrategy $terminationStrategy
     ) {
-        $this->attemptor = $attemptor;
-        $this->logger = $logger;
         $this->waitStrategy = $waitStrategy;
         $this->terminationStrategy = $terminationStrategy;
     }
@@ -74,15 +68,21 @@ class Executor
     /**
      * Try to execute code
      *
+     * @param Attemptor $attemptor
+     * @param ExceptionLogger $logger
+     *
      * @return mixed
      */
-    public function execute()
+    public function execute(Attemptor $attemptor, ExceptionLogger $logger)
     {
+        $this->attemptor = $attemptor;
+        $this->logger = $logger;
+
         // tell the termination strategy we're ready to start attempting execution
         $this->terminationStrategy->start();
 
         // start recursive execution process and return the result
-        return $this->doExecute();
+        return $this->doExecute($attemptor);
     }
 
     /**

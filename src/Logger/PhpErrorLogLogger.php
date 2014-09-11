@@ -3,7 +3,7 @@
  * File PhpErrorLogLogger.php
  */
 
-namespace Tebru\Logger;
+namespace Tebru\Executioner\Logger;
 
 use Psr\Log\LoggerInterface;
 
