@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/tebru/executioner.svg?branch=master)](https://travis-ci.org/tebru/executioner)
+
 # Executioner
 This library aims to create an easy way to execute code that may throw an exception and should be reattempted.
 
