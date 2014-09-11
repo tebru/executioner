@@ -1,0 +1,27 @@
+{
+    "name": "tebru/php-exception-handler",
+    "description": "Provides a library for handling PHP exceptions when you would like to retry execution.",
+    "require": {
+        "php": ">=5.4",
+        "psr/log": "dev-master"
+    },
+    "require-dev": {
+        "php": ">=5.5",
+        "phpunit/phpunit": "dev-master",
+        "mockery/mockery": "dev-master"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Nate Brunette",
+            "email": "n@tebru.net"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Tebru\\Executioner\\": "src/",
+            "Tebru\\\\Executioner\\Test\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev"
+}
