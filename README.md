@@ -4,7 +4,7 @@
 This library aims to create an easy way to execute code that may throw an exception and should be reattempted.
 
 ## Installation
-Run `composer require tebru/executioner:1.0.*`
+Run `composer require tebru/executioner:1.1.*`
 
 ## Usage
 Here is a code sample, further descriptions are below
