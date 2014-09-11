@@ -1,5 +1,5 @@
 {
-    "name": "tebru/php-exception-handler",
+    "name": "tebru/executioner",
     "description": "Provides a library for handling PHP exceptions when you would like to retry execution.",
     "require": {
         "php": ">=5.4",
