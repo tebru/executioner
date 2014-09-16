@@ -8,6 +8,7 @@ use Mockery;
 use PHPUnit_Framework_TestCase;
 use Tebru\Executioner\Executor;
 use Tebru\Executioner\Factory\ExecutorFactory;
+use Tebru\Executioner\Logger\ExceptionLogger;
 use Tebru\Executioner\Strategy\TerminationStrategy;
 use Tebru\Executioner\Strategy\WaitStrategy;
 
@@ -26,7 +27,11 @@ class ExecutorFactoryTest extends PHPUnit_Framework_TestCase
     public function testWillCreateExecutor()
     {
         $factory = new ExecutorFactory();
-        $executor = $factory->make(Mockery::mock(WaitStrategy::class), Mockery::mock(TerminationStrategy::class));
+        $executor = $factory->make(
+            Mockery::mock(ExceptionLogger::class),
+            Mockery::mock(WaitStrategy::class),
+            Mockery::mock(TerminationStrategy::class)
+        );
         $this->assertTrue(is_a($executor, Executor::class));
     }
 } 

@@ -50,7 +50,7 @@ class DelegateException implements ExceptionDelegator
      *
      * @return bool True if callback is called, false if not
      */
-    public function delegate(Exception $exception)
+    public function delegate(Exception $exception = null)
     {
         $exceptionClass = $this->exceptionClass;
         $callback = $this->callback;

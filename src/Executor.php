@@ -54,13 +54,16 @@ class Executor
     /**
      * Constructor
      *
+     * @param ExceptionLogger $logger
      * @param WaitStrategy $waitStrategy
      * @param TerminationStrategy $terminationStrategy
      */
     public function __construct(
+        ExceptionLogger $logger,
         WaitStrategy $waitStrategy,
         TerminationStrategy $terminationStrategy
     ) {
+        $this->logger = $logger;
         $this->waitStrategy = $waitStrategy;
         $this->terminationStrategy = $terminationStrategy;
     }
@@ -69,20 +72,46 @@ class Executor
      * Try to execute code
      *
      * @param Attemptor $attemptor
-     * @param ExceptionLogger $logger
      *
      * @return mixed
      */
-    public function execute(Attemptor $attemptor, ExceptionLogger $logger)
+    public function execute(Attemptor $attemptor)
     {
         $this->attemptor = $attemptor;
-        $this->logger = $logger;
 
         // tell the termination strategy we're ready to start attempting execution
         $this->terminationStrategy->start();
 
         // start recursive execution process and return the result
         return $this->doExecute($attemptor);
+    }
+
+    /**
+     * Set the logger error message
+     *
+     * @param string $errorMessage
+     *
+     * @return $this
+     */
+    public function setErrorMessage($errorMessage)
+    {
+        $this->logger->setErrorMessage($errorMessage);
+
+        return $this;
+    }
+
+    /**
+     * Set the log level for the logger
+     *
+     * @param mixed $logLevel
+     *
+     * @return $this
+     */
+    public function setLogLevel($logLevel)
+    {
+        $this->logger->setLogLevel($logLevel);
+
+        return $this;
     }
 
     /**
@@ -95,45 +124,66 @@ class Executor
     private function doExecute()
     {
         try {
-            return $this->attemptor->attemptOperation();
+            $result = $this->attemptor->attemptOperation();
+
+            if (!in_array($result, $this->attemptor->getFailureValues(), true)) {
+                return $result;
+            }
+
+            return $this->handleFailure();
         } catch (Exception $exception) {
-            // tell termination strategy an attempt has been made
-            $this->terminationStrategy->addAttempt();
+            return $this->handleFailure($exception);
+        }
+    }
 
-            // check for exception that should fail immediately without retry
-            $executedCallback = $this->executeExceptionDelgates($this->attemptor->getFailureExceptions(), $exception);
-            if (true === $executedCallback) {
-                // log the error
-                $this->logger->error(
-                    $this->logger->getErrorMessage() . ' [not retrying]',
-                    ['exception' => $exception]
-                );
+    /**
+     * An exception or failure value was returned
+     *
+     * @param Exception $exception
+     *
+     * @return mixed
+     *
+     * @throws Exception If we cannot handle the exception
+     * @throws TypeMismatchException If array values of not ExceptionDelegates
+     */
+    private function handleFailure(Exception $exception = null)
+    {
+        // tell termination strategy an attempt has been made
+        $this->terminationStrategy->addAttempt();
 
-                return null;
-            }
-
-            $retryableExceptions = $this->attemptor->getRetryableExceptions();
-
-            // if no retryable exceptions are set, assume we're retrying on all other exceptions
-            if (0 === count($retryableExceptions)) {
-                return $this->retry($exception);
-            }
-
-            // otherwise, we'll only retry on the exceptions that have been set
-            $executedCallback = $this->executeExceptionDelgates($retryableExceptions, $exception);
-            if (true === $executedCallback) {
-                return $this->retry($exception);
-            }
-
-            //log that we were unable to handle the exception
+        // check for exception that should fail immediately without retry
+        $executedCallback = $this->executeExceptionDelgates($this->attemptor->getFailureExceptions(), $exception);
+        if (true === $executedCallback) {
+            // log the error
             $this->logger->error(
-                $this->logger->getErrorMessage() . ' [no predetermined handlers]',
+                $this->logger->getErrorMessage() . ' [not retrying]',
                 ['exception' => $exception]
             );
 
-            // rethrow exception
-            throw $exception;
+            return null;
         }
+
+        $retryableExceptions = $this->attemptor->getRetryableExceptions();
+
+        // if no retryable exceptions are set, assume we're retrying on all other exceptions
+        if (0 === count($retryableExceptions)) {
+            return $this->retry($exception);
+        }
+
+        // otherwise, we'll only retry on the exceptions that have been set
+        $executedCallback = $this->executeExceptionDelgates($retryableExceptions, $exception);
+        if (true === $executedCallback) {
+            return $this->retry($exception);
+        }
+
+        //log that we were unable to handle the exception
+        $this->logger->error(
+            $this->logger->getErrorMessage() . ' [no predetermined handlers]',
+            ['exception' => $exception]
+        );
+
+        // rethrow exception
+        throw $exception;
     }
 
     /**
@@ -147,7 +197,7 @@ class Executor
      * @throws TypeMismatchException
      * @return bool
      */
-    private function executeExceptionDelgates(array $exceptionDelegates, Exception $exception)
+    private function executeExceptionDelgates(array $exceptionDelegates, Exception $exception = null)
     {
         $exceptionCallbacksCalled = 0;
 
@@ -183,7 +233,7 @@ class Executor
      *
      * @return mixed
      */
-    private function retry(Exception $exception)
+    private function retry(Exception $exception = null)
     {
         if ($this->terminationStrategy->hasFinished()) {
             // we're done attempting, log as an error and exit
@@ -214,4 +264,4 @@ class Executor
         // retry
         return $this->doExecute();
     }
-} 
+}

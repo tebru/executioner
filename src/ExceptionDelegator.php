@@ -24,5 +24,5 @@ interface ExceptionDelegator
      *
      * @return mixed
      */
-    public function delegate(Exception $exception);
+    public function delegate(Exception $exception = null);
 }

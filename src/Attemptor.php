@@ -15,6 +15,18 @@ namespace Tebru\Executioner;
 interface Attemptor
 {
     /**
+     * Return an array of values from attemptOperation() that should
+     * trigger a retry
+     *
+     * Examples:
+     *     return [null]
+     *     return [false, null, -1, 'oops'];
+     *
+     * @return array
+     */
+    public function getFailureValues();
+
+    /**
      * Put code here that would normally go in a try block
      *
      * @return mixed
