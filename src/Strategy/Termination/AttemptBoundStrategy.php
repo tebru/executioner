@@ -16,6 +16,12 @@ use Tebru\Executioner\Strategy\Termination;
  */
 final class AttemptBoundStrategy extends Termination
 {
+    /**#@+
+     * Default values
+     */
+    const DEFAULT_LIMIT = 1;
+    /**#@-/
+
     /**
      * How many attempts we should make before quitting
      *
@@ -28,7 +34,7 @@ final class AttemptBoundStrategy extends Termination
      *
      * @param int $limit
      */
-    public function __construct($limit = 1)
+    public function __construct($limit = self::DEFAULT_LIMIT)
     {
         $this->limit = $limit;
     }

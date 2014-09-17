@@ -4,7 +4,6 @@
  */
 
 namespace Tebru\Executioner\Test\Factory;
-use Mockery;
 use PHPUnit_Framework_TestCase;
 use Tebru\Executioner\Factory\ExceptionLoggerFactory;
 use Tebru\Executioner\Logger\ExceptionLogger;
@@ -16,11 +15,6 @@ use Tebru\Executioner\Logger\ExceptionLogger;
  */
 class ExceptionLoggerFactoryTest extends PHPUnit_Framework_TestCase
 {
-    protected function tearDown()
-    {
-        Mockery::close();
-    }
-
     public function testWillCreateLogger()
     {
         $factory = new ExceptionLoggerFactory();

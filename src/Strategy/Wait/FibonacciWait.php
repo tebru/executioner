@@ -16,6 +16,13 @@ use Tebru\Executioner\Strategy\Wait;
  */
 final class FibonacciWait extends Wait
 {
+    /**#@+
+     * Default values
+     */
+    const DEFAULT_STARTING_FIB = 1;
+    const DEFAULT_PREVIOUS_FIB = 0;
+    /**#@-*/
+
     /**
      * Current fibonacci number
      *
@@ -35,8 +42,10 @@ final class FibonacciWait extends Wait
      * @param int $startingFibNumber
      * @param int $previousFibNumber
      */
-    public function __construct($startingFibNumber = 1, $previousFibNumber = 0)
-    {
+    public function __construct(
+        $startingFibNumber = self::DEFAULT_STARTING_FIB,
+        $previousFibNumber = self::DEFAULT_PREVIOUS_FIB
+    ) {
         $this->currentFibNumber = $startingFibNumber;
         $this->previousFibNumber = $previousFibNumber;
     }

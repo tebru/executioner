@@ -16,6 +16,12 @@ use Tebru\Executioner\Strategy\Wait;
  */
 final class StaticWait extends Wait
 {
+    /**#@+
+     * Default values
+     */
+    const DEFAULT_SECONDS_PER_INTERVAL = 1;
+    /**#@-*/
+
     /**
      * Number of microseconds to wait
      *
@@ -28,7 +34,7 @@ final class StaticWait extends Wait
      *
      * @param int $secondsPerInterval Number of seconds to wait
      */
-    public function __construct($secondsPerInterval = 1)
+    public function __construct($secondsPerInterval = self::DEFAULT_SECONDS_PER_INTERVAL)
     {
         $this->waitTime = $secondsPerInterval;
     }

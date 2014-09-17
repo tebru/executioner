@@ -16,6 +16,14 @@ use Tebru\Executioner\Strategy\Wait;
  */
 class LogarithmicWait extends Wait
 {
+    /**#@+
+     * Default values
+     */
+    const DEFAULT_STARTING_WAIT = 2;
+    const DEFAULT_WAIT_INCREMENT = 1;
+    const DEFAULT_LOG_BASE = 10;
+    /**#@-*/
+
     /**
      * The base number in seconds used for calculating wait time
      *
@@ -44,8 +52,11 @@ class LogarithmicWait extends Wait
      * @param int $waitIncrement Number of seconds we should increment base by
      * @param int $logBase Number base
      */
-    public function __construct($startingWait = 2, $waitIncrement = 1, $logBase = 10)
-    {
+    public function __construct(
+        $startingWait = self::DEFAULT_STARTING_WAIT,
+        $waitIncrement = self::DEFAULT_WAIT_INCREMENT,
+        $logBase = self::DEFAULT_LOG_BASE
+    ) {
         $this->baseWait = $startingWait;
         $this->baseIncrement = $waitIncrement;
         $this->logBase = $logBase;

@@ -16,6 +16,13 @@ use Tebru\Executioner\Strategy\Wait;
  */
 final class LinearWait extends Wait
 {
+    /**#@+
+     * Default values
+     */
+    const DEFAULT_STARTING_WAIT = 1;
+    const DEFAULT_WAIT_INCREMENT = 1;
+    /**#@-*/
+
     /**
      * The amount we should increment each attempt
      *
@@ -36,8 +43,10 @@ final class LinearWait extends Wait
      * @param int $startingWait Number of seconds we should start waiting at
      * @param int $waitIncrement Number of seconds we should add to wait time
      */
-    public function __construct($startingWait = 1, $waitIncrement = 1)
-    {
+    public function __construct(
+        $startingWait = self::DEFAULT_STARTING_WAIT,
+        $waitIncrement = self::DEFAULT_WAIT_INCREMENT
+    ) {
         $this->baseWait = $startingWait;
         $this->baseIncrement = $waitIncrement;
     }
