@@ -30,4 +30,12 @@ class FibonacciWaitTest extends PHPUnit_Framework_TestCase
         $wait->incrementWait();
         $this->assertEquals(8, $wait->getWaitTime());
     }
+
+    public function testReset()
+    {
+        $wait = new FibonacciWait(3, 2);
+        $wait->incrementWait();
+        $wait->reset();
+        $this->assertEquals(5, $wait->getWaitTime());
+    }
 }

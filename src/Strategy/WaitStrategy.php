@@ -34,4 +34,11 @@ interface WaitStrategy
      * @return mixed
      */
     public function incrementWait();
-} 
+
+    /**
+     * Reset this strategy
+     *
+     * @return null
+     */
+    public function reset();
+}

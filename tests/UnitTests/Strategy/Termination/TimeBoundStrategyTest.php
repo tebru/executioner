@@ -28,4 +28,13 @@ class TimeBoundStrategyTest extends PHPUnit_Framework_TestCase
         $strategy->start();
         $this->assertFalse($strategy->hasFinished());
     }
+
+    public function testReset()
+    {
+        $strategy = new TimeBoundStrategy(0);
+        $strategy->start();
+        $strategy->addAttempt();
+        $strategy->reset();
+        $this->assertSame(0, $strategy->getAttempts());
+    }
 }

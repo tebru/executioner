@@ -38,4 +38,12 @@ class LinearWaitTest extends PHPUnit_Framework_TestCase
         $wait->incrementWait();
         $this->assertEquals(3, $wait->getWaitTime());
     }
+
+    public function testReset()
+    {
+        $wait = new LinearWait(2);
+        $wait->incrementWait();
+        $wait->reset();
+        $this->assertEquals(2, $wait->getWaitTime());
+    }
 }

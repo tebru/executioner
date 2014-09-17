@@ -15,7 +15,7 @@ use Tebru\Executioner\Strategy\WaitStrategy;
  *
  * @author Nate Brunette <n@tebru.net>
  */
-class NullWait implements WaitStrategy
+final class NullWait implements WaitStrategy
 {
     /**
      * {@inheritdoc}
@@ -37,6 +37,16 @@ class NullWait implements WaitStrategy
      * {@inheritdoc}
      */
     public function incrementWait()
+    {
+        return null;
+    }
+
+    /**
+     * Reset this strategy
+     *
+     * @return null
+     */
+    public function reset()
     {
         return null;
     }

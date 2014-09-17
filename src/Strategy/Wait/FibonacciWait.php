@@ -24,6 +24,20 @@ final class FibonacciWait extends Wait
     /**#@-*/
 
     /**
+     * The starting current fibonacci number
+     *
+     * @var  $startingFib
+     */
+    private $startingFib;
+
+    /**
+     * The starting previous fibonacci number
+     *
+     * @var  $startingPrevFib
+     */
+    private $startingPrevFib;
+
+    /**
      * Current fibonacci number
      *
      * @var int $startingFibNumber
@@ -46,6 +60,8 @@ final class FibonacciWait extends Wait
         $startingFibNumber = self::DEFAULT_STARTING_FIB,
         $previousFibNumber = self::DEFAULT_PREVIOUS_FIB
     ) {
+        $this->startingFib = $startingFibNumber;
+        $this->startingPrevFib = $previousFibNumber;
         $this->currentFibNumber = $startingFibNumber;
         $this->previousFibNumber = $previousFibNumber;
     }
@@ -64,4 +80,16 @@ final class FibonacciWait extends Wait
         $this->previousFibNumber = $this->currentFibNumber;
         $this->currentFibNumber = $next;
     }
+
+    /**
+     * Reset this strategy
+     *
+     * @return null
+     */
+    public function reset()
+    {
+        $this->currentFibNumber = $this->startingFib;
+        $this->previousFibNumber = $this->startingPrevFib;
+    }
+
 }

@@ -54,4 +54,14 @@ final class StaticWait extends Wait
     {
         return null;
     }
+
+    /**
+     * Reset this strategy
+     *
+     * @return null
+     */
+    public function reset()
+    {
+        return null;
+    }
 }

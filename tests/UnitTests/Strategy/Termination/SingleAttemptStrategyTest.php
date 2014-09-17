@@ -20,4 +20,12 @@ class SingleAttemptStrategyTest extends PHPUnit_Framework_TestCase
         $strategy = new SingleAttemptStrategy();
         $this->assertTrue($strategy->hasFinished());
     }
+
+    public function testReset()
+    {
+        $strategy = new SingleAttemptStrategy();
+        $strategy->addAttempt();
+        $strategy->reset();
+        $this->assertSame(0, $strategy->getAttempts());
+    }
 }

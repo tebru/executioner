@@ -48,4 +48,14 @@ final class AttemptBoundStrategy extends Termination
     {
         return $this->getAttempts() >= $this->limit;
     }
+
+    /**
+     * Reset this strategy
+     *
+     * @return null
+     */
+    public function reset()
+    {
+        $this->setAttempts(0);
+    }
 }

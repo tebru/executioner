@@ -24,6 +24,13 @@ final class LinearWait extends Wait
     /**#@-*/
 
     /**
+     * The wait time we start with
+     *
+     * @var  $startingWait
+     */
+    private $startingWait;
+
+    /**
      * The amount we should increment each attempt
      *
      * @var int $baseIncrement
@@ -47,6 +54,7 @@ final class LinearWait extends Wait
         $startingWait = self::DEFAULT_STARTING_WAIT,
         $waitIncrement = self::DEFAULT_WAIT_INCREMENT
     ) {
+        $this->startingWait = $startingWait;
         $this->baseWait = $startingWait;
         $this->baseIncrement = $waitIncrement;
     }
@@ -65,5 +73,15 @@ final class LinearWait extends Wait
     public function incrementWait()
     {
         $this->baseWait += $this->baseIncrement;
+    }
+
+    /**
+     * Reset this strategy
+     *
+     * @return null
+     */
+    public function reset()
+    {
+        $this->baseWait = $this->startingWait;
     }
 }

@@ -49,4 +49,11 @@ interface TerminationStrategy
      * @return int
      */
     public function getStartedTime();
+
+    /**
+     * Reset this strategy
+     *
+     * @return null
+     */
+    public function reset();
 }

@@ -77,6 +77,14 @@ abstract class Termination implements TerminationStrategy
     }
 
     /**
+     * {@inheritdoc}
+     */
+    final protected function setAttempts($attempts)
+    {
+        $this->attempts = $attempts;
+    }
+
+    /**
      * Returns the current time from time()
      *
      * @return int

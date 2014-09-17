@@ -90,6 +90,10 @@ class Executor
             throw new BadMethodCallException('Attemptor should not be null');
         }
 
+        // reset the strategies in case they've persisted between execute calls
+        $this->terminationStrategy->reset();
+        $this->waitStrategy->reset();
+
         // tell the termination strategy we're ready to start attempting execution
         $this->terminationStrategy->start();
 

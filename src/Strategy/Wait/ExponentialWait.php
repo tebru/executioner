@@ -25,6 +25,13 @@ final class ExponentialWait extends Wait
     /**#@-*/
 
     /**
+     * The wait time we start with
+     *
+     * @var  $startingWait
+     */
+    private $startingWait;
+
+    /**
      * The exponent used to increase time
      *
      * @var int $exponent
@@ -57,6 +64,7 @@ final class ExponentialWait extends Wait
         $startingWait = self::DEFAULT_STARTING_WAIT,
         $waitIncrement = self::DEFAULT_WAIT_INCREMENT
     ) {
+        $this->startingWait = $startingWait;
         $this->exponent = $exponent;
         $this->baseWait = $startingWait;
         $this->baseIncrement = $waitIncrement;
@@ -76,5 +84,15 @@ final class ExponentialWait extends Wait
     public function incrementWait()
     {
         $this->baseWait += $this->baseIncrement;
+    }
+
+    /**
+     * Reset this strategy
+     *
+     * @return null
+     */
+    public function reset()
+    {
+        $this->baseWait = $this->startingWait;
     }
 }

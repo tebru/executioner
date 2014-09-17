@@ -40,4 +40,13 @@ class LogarithmicWaitTest extends PHPUnit_Framework_TestCase
         $wait = new LogarithmicWait(2, 1, 2);
         $this->assertSame(log(2, 2), $wait->getWaitTime());
     }
+
+    public function testReset()
+    {
+        $wait = new LogarithmicWait(2, 2);
+        $wait->incrementWait();
+        $wait->reset();
+        $this->assertSame(log(2, 10), $wait->getWaitTime());
+
+    }
 }

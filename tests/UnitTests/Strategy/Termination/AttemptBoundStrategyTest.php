@@ -39,4 +39,12 @@ class AttemptBoundStrategyTest extends PHPUnit_Framework_TestCase
         $strategy->addAttempt();
         $this->assertSame(1, $strategy->getAttempts());
     }
+
+    public function testReset()
+    {
+        $strategy = new AttemptBoundStrategy();
+        $strategy->addAttempt();
+        $strategy->reset();
+        $this->assertSame(0, $strategy->getAttempts());
+    }
 }

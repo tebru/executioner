@@ -60,4 +60,12 @@ class ExponentialWaitTest extends PHPUnit_Framework_TestCase
         $wait->incrementWait();
         $this->assertEquals(9, $wait->getWaitTime());
     }
+
+    public function testReset()
+    {
+        $wait = new ExponentialWait(2, 2);
+        $wait->incrementWait();
+        $wait->reset();
+        $this->assertEquals(4, $wait->getWaitTime());
+    }
 }

@@ -14,7 +14,7 @@ use Tebru\Executioner\Strategy\Termination;
  *
  * @author Nate Brunette <n@tebru.net>
  */
-class SingleAttemptStrategy extends Termination
+final class SingleAttemptStrategy extends Termination
 {
     /**
      * Always return true, we're only trying once
@@ -24,5 +24,15 @@ class SingleAttemptStrategy extends Termination
     public function hasFinished()
     {
         return true;
+    }
+
+    /**
+     * Reset this strategy
+     *
+     * @return null
+     */
+    public function reset()
+    {
+        $this->setAttempts(0);
     }
 }

@@ -30,4 +30,12 @@ class StaticWaitTest extends PHPUnit_Framework_TestCase
         $wait->incrementWait();
         $this->assertEquals(2, $wait->getWaitTime());
     }
+
+    public function testReset()
+    {
+        $wait = new StaticWait(2);
+        $wait->incrementWait();
+        $wait->reset();
+        $this->assertEquals(2, $wait->getWaitTime());
+    }
 } 

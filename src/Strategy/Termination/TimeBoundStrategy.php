@@ -59,4 +59,16 @@ final class TimeBoundStrategy extends Termination
         $timeString = '+' . $this->secondsEnding . ' second';
         $this->endingTime = strtotime($timeString, $this->getStartedTime());
     }
+
+    /**
+     * Reset this strategy
+     *
+     * Time gets reset on consecutive calls to start()
+     *
+     * @return null
+     */
+    public function reset()
+    {
+        $this->setAttempts(0);
+    }
 }
