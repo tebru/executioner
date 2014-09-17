@@ -15,6 +15,14 @@ use Tebru\Executioner\Strategy\Wait\ExponentialWait;
  */
 class ExponentialWaitTest extends PHPUnit_Framework_TestCase
 {
+    public function testExponentialWaitDefaults()
+    {
+        $wait = new ExponentialWait();
+        $this->assertEquals(1, $wait->getWaitTime());
+        $wait->incrementWait();
+        $this->assertEquals(4, $wait->getWaitTime());
+    }
+
     public function testExponentialWait()
     {
         $wait = new ExponentialWait(2);

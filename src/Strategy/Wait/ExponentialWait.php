@@ -44,7 +44,7 @@ final class ExponentialWait extends Wait
      * @param int $startingWait How many seconds we should start the wait with
      * @param int $waitIncrement How much we should increase the base number by
      */
-    public function __construct($exponent, $startingWait = 1, $waitIncrement = 1)
+    public function __construct($exponent = 2, $startingWait = 1, $waitIncrement = 1)
     {
         $this->exponent = $exponent;
         $this->baseWait = $startingWait;
