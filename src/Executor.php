@@ -77,6 +77,7 @@ class Executor
      *
      * @param Attemptor $attemptor
      *
+     * @throws \BadMethodCallException
      * @return mixed
      */
     public function execute(Attemptor $attemptor = null)
@@ -161,6 +162,11 @@ class Executor
         // tell termination strategy an attempt has been made
         $this->terminationStrategy->addAttempt();
 
+        // if an exception wasn't thrown, just retry
+        if (null === $exception) {
+            return $this->retry();
+        }
+
         // check for exception that should fail immediately without retry
         $executedCallback = $this->executeExceptionDelegates($this->attemptor->getFailureExceptions(), $exception);
         if (true === $executedCallback) {
@@ -175,6 +181,11 @@ class Executor
 
         $retryableExceptions = $this->attemptor->getRetryableExceptions();
 
+        // if null is returned from retryable exceptions and an exception was thrown, quit early
+        if (null === $retryableExceptions) {
+            $this->unhandleable($exception);
+        }
+
         // if no retryable exceptions are set, assume we're retrying on all other exceptions
         if (0 === count($retryableExceptions)) {
             return $this->retry($exception);
@@ -186,14 +197,9 @@ class Executor
             return $this->retry($exception);
         }
 
-        //log that we were unable to handle the exception
-        $this->logger->error(
-            $this->logger->getErrorMessage() . ' [no predetermined handlers]',
-            ['exception' => $exception]
-        );
+        $this->unhandleable($exception);
 
-        // rethrow exception
-        throw $exception;
+        return null;
     }
 
     /**
@@ -273,5 +279,24 @@ class Executor
 
         // retry
         return $this->doExecute();
+    }
+
+    /**
+     * We can't handle this exception, log it and rethrow
+     *
+     * @param Exception $exception
+     *
+     * @throws \Exception
+     */
+    private function unhandleable(Exception $exception)
+    {
+        //log that we were unable to handle the exception
+        $this->logger->error(
+            $this->logger->getErrorMessage() . ' [no predetermined handlers]',
+            ['exception' => $exception]
+        );
+
+        // rethrow exception
+        throw $exception;
     }
 }

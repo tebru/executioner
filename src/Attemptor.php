@@ -39,11 +39,14 @@ interface Attemptor
      * If an empty array is returned, we will assume that all exceptions that aren't handled
      * as failure exceptions will be caught and retried.
      *
+     * If null is returned, we're not going to retry on any exceptions and should rethrow any
+     * exception encountered.
+     *
      * The expected return format is an array of Tebru\Executioner\ExceptionDelegator objects.
      * Use a Tebru\Executioner\Closure\NullClosure when there isn't additional handler code
      * needed.
      *
-     * @return ExceptionDelegator[]
+     * @return ExceptionDelegator[]|null
      */
     public function getRetryableExceptions();
 

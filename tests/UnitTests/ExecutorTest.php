@@ -224,13 +224,11 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $executor->execute($attemptor);
     }
 
-    public function testRetryOnFailure()
+    public function testRetryOnFailureValue()
     {
         $attemptor = $this->mockAttemptor();
         $attemptor->shouldReceive('attemptOperation')->once()->andReturn(null);
         $attemptor->shouldReceive('getFailureValues')->once()->andReturn([null]);
-        $attemptor->shouldReceive('getFailureExceptions')->once()->andReturn([]);
-        $attemptor->shouldReceive('getRetryableExceptions')->once()->andReturn([]);
         $attemptor->shouldReceive('exitOperation')->once();
 
         $termination = $this->mockTerminationStrategy();
@@ -268,6 +266,24 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
 
         $executor = new Executor($this->mockExceptionLogger(), $this->mockWaitStrategy(), $termination, $attemptor);
         $executor->execute();
+    }
+
+    /**
+     * @expectedException \Exception
+     */
+    public function testNullReturnFromRetryableExceptions()
+    {
+        $attemptor = $this->mockAttemptor();
+        $attemptor->shouldReceive('attemptOperation')->once()->andThrow(new Exception());
+        $attemptor->shouldReceive('getFailureExceptions')->once()->andReturn([]);
+        $attemptor->shouldReceive('getRetryableExceptions')->once()->andReturn(null);
+
+        $termination = $this->mockTerminationStrategy();
+        $termination->shouldReceive('start')->once();
+        $termination->shouldReceive('addAttempt')->once();
+
+        $executor = new Executor($this->mockExceptionLogger(), $this->mockWaitStrategy(), $termination);
+        $executor->execute($attemptor);
     }
 
     private function mockAttemptor()
