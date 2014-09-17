@@ -152,7 +152,7 @@ class Executor
         $this->terminationStrategy->addAttempt();
 
         // check for exception that should fail immediately without retry
-        $executedCallback = $this->executeExceptionDelgates($this->attemptor->getFailureExceptions(), $exception);
+        $executedCallback = $this->executeExceptionDelegates($this->attemptor->getFailureExceptions(), $exception);
         if (true === $executedCallback) {
             // log the error
             $this->logger->error(
@@ -171,7 +171,7 @@ class Executor
         }
 
         // otherwise, we'll only retry on the exceptions that have been set
-        $executedCallback = $this->executeExceptionDelgates($retryableExceptions, $exception);
+        $executedCallback = $this->executeExceptionDelegates($retryableExceptions, $exception);
         if (true === $executedCallback) {
             return $this->retry($exception);
         }
@@ -197,7 +197,7 @@ class Executor
      * @throws TypeMismatchException
      * @return bool
      */
-    private function executeExceptionDelgates(array $exceptionDelegates, Exception $exception = null)
+    private function executeExceptionDelegates(array $exceptionDelegates, Exception $exception = null)
     {
         $exceptionCallbacksCalled = 0;
 
