@@ -22,6 +22,5 @@
             "Tebru\\Executioner\\": "src/",
             "Tebru\\Executioner\\Test\\": "tests/"
         }
-    },
-    "minimum-stability": "dev"
+    }
 }
