@@ -246,7 +246,29 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $logger->shouldReceive('getErrorMessage')->once();
 
         $executor = new Executor($logger, $this->mockWaitStrategy(), $termination);
-        $executor->execute($attemptor);    }
+        $executor->execute($attemptor);
+    }
+
+    /**
+     * @expectedException \BadMethodCallException
+     */
+    public function testWillThrowExceptionWithoutAttemptor()
+    {
+        $executor = new Executor($this->mockExceptionLogger(), $this->mockWaitStrategy(), $this->mockTerminationStrategy());
+        $executor->execute();
+    }
+
+    public function testWillUseInjectedAttemptor()
+    {
+        $attemptor = $this->mockAttemptor();
+        $attemptor->shouldReceive('attemptOperation')->once()->andReturnNull();
+        $attemptor->shouldReceive('getFailureValues')->once()->andReturn([]);
+        $termination = $this->mockTerminationStrategy();
+        $termination->shouldReceive('start')->once();
+
+        $executor = new Executor($this->mockExceptionLogger(), $this->mockWaitStrategy(), $termination, $attemptor);
+        $executor->execute();
+    }
 
     private function mockAttemptor()
     {

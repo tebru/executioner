@@ -5,6 +5,7 @@
 
 namespace Tebru\Executioner;
 
+use BadMethodCallException;
 use Exception;
 use Tebru\Executioner\Exception\TypeMismatchException;
 use Tebru\Executioner\Strategy\TerminationStrategy;
@@ -57,15 +58,18 @@ class Executor
      * @param ExceptionLogger $logger
      * @param WaitStrategy $waitStrategy
      * @param TerminationStrategy $terminationStrategy
+     * @param Attemptor $attemptor
      */
     public function __construct(
         ExceptionLogger $logger,
         WaitStrategy $waitStrategy,
-        TerminationStrategy $terminationStrategy
+        TerminationStrategy $terminationStrategy,
+        Attemptor $attemptor = null
     ) {
         $this->logger = $logger;
         $this->waitStrategy = $waitStrategy;
         $this->terminationStrategy = $terminationStrategy;
+        $this->attemptor = $attemptor;
     }
 
     /**
@@ -75,15 +79,21 @@ class Executor
      *
      * @return mixed
      */
-    public function execute(Attemptor $attemptor)
+    public function execute(Attemptor $attemptor = null)
     {
-        $this->attemptor = $attemptor;
+        if (null !== $attemptor) {
+            $this->attemptor = $attemptor;
+        }
+
+        if (null === $this->attemptor) {
+            throw new BadMethodCallException('Attemptor should not be null');
+        }
 
         // tell the termination strategy we're ready to start attempting execution
         $this->terminationStrategy->start();
 
         // start recursive execution process and return the result
-        return $this->doExecute($attemptor);
+        return $this->doExecute();
     }
 
     /**
