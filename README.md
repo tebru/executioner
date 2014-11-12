@@ -4,83 +4,62 @@
 This library aims to create an easy way to execute code that may throw an exception and should be reattempted.
 
 ## Installation
-Run `composer require tebru/executioner:1.1.*`
+Run `composer require tebru/executioner:~0.1`
 
-## Usage
-Here is a code sample, further descriptions are below
-
-```
-$attemptor = new \Foo\Bar\BazAttemptor();
-$waitStrategy = new \Tebru\Executioner\Strategy\Wait\FibonacciWaitStrategy();
-$terminationStrategy = new \Tebru\Executioner\Strategy\Termination\AttemptBound(5);
-$logger = new \Tebru\Executioner\Logger\ExceptionLogger(new Psr\Log\NullLogger(), Psr\LogLevel::ERROR, 'My custom error message');
-
-$executorFactory = new \Tebru\Executioner\Factory\ExecutorFactory();
-$executor = $executorFactor->make($waitStrategy, $terminationStrategy);
-$executor->execute($attemptor, $logger);
-```
-
-### Exception Delegator
-There is a class `Tebru\Executioner\Delegate\ExceptionDelegate` that shows an example usage of the `Tebru\Executioner\ExceptionDelegator` interface.
-
-This class aims to provide a way to execute a closure if the exception passed into the delegate method matches the type of the exception.
-
-#### Null Closure
-Use `Tebru\Executioner\Closure\NullClosure` if you want to handle an exception without specifying additional code that needs to be run.
-
-### Creating an Attemptor
-An attemptor is the class that contains all of the code that needs to be executed.  Implement the `Tebru\Executioner\Attemptor` interface.
-
-#### Attemptor::attemptOperation()
-Put any code that would normally go in a `try` block in this method.
+## Basic Usage
+The library can be used as simply as this
 
 ```
-$this->myService->apiCall();
+<?php
+
+use Tebru\Executioner;
+
+$executor = new Executor();
+$result = $executor->execute(function () { /* code that may throw an exception */ });
 ```
 
-#### Attemptor::getFailureExceptions()
-This should return an array of `ExceptionDelegator` objects.  If there are exceptions that should not be retried, specify them here.
+Which will retry on all exceptions without stopping.
+
+You can also pass in arguments that will be called on the callable
 
 ```
-return [
-    new \Tebru\Executioner\Delegate\ExceptionDelegate(
-        '\Foo\Bar\BazException',
-        function (BazException $exception) {
-            $this->cleanupMethod();
-        }
-    ),
-]
-```
+<?php
 
-#### Attemptor::getRetryableExceptions()
-This should return an array of `ExceptionDelegator` objects. If this method returns an empty array, we assume that all exceptions thrown should be retried.
+use Tebru\Executioner;
 
+$executor = new Executor();
+$result = $executor->execute(
+    function ($foo) { $foo->doSomething(); },
+    [$foo]
+);
 ```
-return [
-    new \Tebru\Executioner\Delegate\ExceptionDelegate(
-        '\My\Catchable\Exception',
-        function (Exception $exception) {
-            $this->doSomething();
-        }
-    ),
-    new \Tebru\Executioner\Delegate\ExceptionDelegate(
-        '\Another\Catchable\Exception',
-        new \Tebru\Executioner\Closure\NullClosure()
-    ),
-]
-```
+While this is the same as `use` in this case, if your callable is an object, this becomes useful.
 
-#### Attemptor::exitOperation()
-Put any additional cleanup that needs to happen in this method.
+
+*Please note: any of the following dependencies can be injected through the constructor or a setter*
+
+### Executor Logging
+If you would like to log what's happening, you need to use a `\Tebru\Executioner\Logger\ExceptionLogger`
+
+This class accepts a PSR LoggerInterface, log level, and default log message.  It aims to configure a logger since there isn't control over the logger during execution.
+
+All arguments are optional.  If a logger is not passed in, a `\Tebru\Executioner\Logger\PhpErrorLogLogger` will be used.  This logger uses the php function `error_log()` to log error messages.
 
 ```
-$this->cleanupMethod();
+<?php
+
+use Tebru\Executioner;
+use Tebru\Executioner\Logger;
+
+$logger = new ExceptionLogger();
+$executor = new Executor($logger);
+$result = $executor->execute(function () { /* code that may throw an exception */ });
 ```
 
-### Defining a Wait Strategy
-Use one of the included wait strategies or create your own using the `Tebru\Executioner\Strategy\Wait` abstract class or the `Tebru\Executioner\Strategy\WaitStrategy` interface.
+### Wait Strategy
+Use one of the included wait strategies or create your own using the `Tebru\Executioner\Strategy\WaitStrategy` interface.
 
-Wait strategies determine how long we should wait before retrying an operation.
+Wait strategies determine how long the application will wait before retrying.
 
 Included wait strategies:
 
@@ -90,13 +69,172 @@ Included wait strategies:
 - Logarithmic: Increase time based on a logarithmic curve.  Can define initial starting time in seconds, number of seconds to increment by, and the base to use.
 - Fibonacci: Increase time based on the fibonacci sequence.  Can define initial starting pair.  Initial wait time will be the sum.
 
-### Defining a Termination Strategy
-A termination strategy will determine when we should stop retrying the operation.
+```
+<?php
+
+use Tebru\Executioner;
+use Tebru\Executioner\Logger;
+use Tebru\Executioner\Strategy\Wait;
+
+$logger = new ExceptionLogger();
+$waitStrategy = new FibonacciWaitStrategy();
+$executor = new Executor(null, $waitStrategy);
+$executor->setLogger($logger);
+$result = $executor->execute(function () { /* code that may throw an exception */ });
+```
+
+### Termination Strategy
+A termination strategy will determine when to stop retrying.
 
 Included termination strategies:
 
 - Attempt-bound: Set the number of attempts we should make before quitting
 - Time-bound: Set the time in seconds we should wait before quitting
 
-### Exception Logging
-The `Tebru\Executioner\Logger\ExceptionLogger` implements the PSR LoggerInterface and adds fields for the error message and log level that should be used.  It also takes a LoggerInterface that is used to do the actual logging.
+```
+<?php
+
+use Tebru\Executioner;
+use Tebru\Executioner\Logger;
+use Tebru\Executioner\Strategy\Wait;
+use Tebru\Executioner\Strategy\Termination;
+
+$logger = new ExceptionLogger();
+$waitStrategy = new FibonacciWaitStrategy();
+$terminationStrategy = new TimeBoundStrategy(3600);
+$executor = new Executor(null, null, $terminationStrategy);
+$executor->setLogger($logger);
+$executor->setWaitStrategy($waitStrategy);
+$result = $executor->execute(function () { /* code that may throw an exception */ });
+```
+
+## Attemptor
+The attemptor is the thing responsible for executing code you might find in a `try` block.
+
+The easiest way to is to pass in a closure to the `execute()` method, which has been demonstrated before.  However it can also be an object that uses the `__invoke()` magic method.  An interface `\Tebru\Executioner\Attemptor\Invokeable` has been created for convenience.
+
+```
+<?php
+
+use Tebru\Executioner;
+use Tebru\Executioner\Logger;
+use Tebru\Executioner\Strategy\Wait;
+use Tebru\Executioner\Strategy\Termination;
+
+$logger = new ExceptionLogger();
+$waitStrategy = new FibonacciWaitStrategy();
+$terminationStrategy = new TimeBoundStrategy(3600);
+$attemptor = new MyInvokeableClass(); // must be created
+$executor = new Executor(null, null, null, $attemptor);
+$executor->setLogger($logger);
+$executor->setWaitStrategy($waitStrategy);
+$executor->setTerminationStrategy($terminationStrategy);
+$result = $executor->execute();
+```
+
+As demonstrated, if an attemptor is already set, it does not need to be passed into the `execute()` method.
+
+### ExceptionRetryable
+The `\Tebru\Executioner\Attemptor\ExceptionRetryable` interface has one method `getRetryableExceptions()`.
+
+This specifies exceptions that, if thrown, should be run through the retry logic.  Optionally, a callback can be set that allows for some additional handling if that exception is thrown.
+
+This method should return an array of `\Tebru\Executioner\Delegate\ExceptionDelegate` objects.
+
+### ImmediatelyFailable
+The `\Tebru\Executioner\Attemptor\ImmediatelyFailable` interface has one method `getImmediatelyFailableExceptions()`.
+
+This specifies exceptions that, if thrown, should cause the retrying to stop right away.  Optionally, a callback can be set that allows for some additional handling if that exception is thrown.
+
+This method should return an array of `\Tebru\Executioner\ExceptionDelegator` objects.
+
+### ExceptionDelegate
+A `\Tebru\Executioner\Delegate\ExceptionDelegate` implements `\Tebru\Executioner\ExceptionDelegator` and takes a class name and a callable as constructor parameters.
+
+When `delegate()` is called, the method will check the given exception against the class name.  If it matches, it will run the callback if it exists.  It will return true on a match and false otherwise.
+
+The executor has two methods: `setRetryableExceptions()` and `setImmediatelyFailableExceptions()`.  Both require an array.  If any of the array values are strings, they will be converted to `ExceptionDelegate` objects with a `\Tebru\Executioner\Closure\NullClosure` used as the callback.
+
+```
+<?php
+
+use Tebru\Executioner;
+use Tebru\Executioner\Delegate;
+
+$executor = new Executor();
+$executor->setImmediatelyFailableExceptions([\InvalidArgumentException::class]);
+$executor->setRetryableExceptions([new ExceptionDelegate(\Exception::class), \BadMethodCallException::class]);
+$result = $executor->execute();
+```
+
+### ReturnRetryable
+The `\Tebru\Executioner\Attemptor\ReturnRetryable` interface has one method `getRetryableReturns()`.
+
+This specifies an array of values that, if returned, should trigger the retry logic.
+
+### Attemptor
+Here is an example implementation of the `\Tebru\Executioner\Attemptor` interface. This interface is available for convenience.
+
+```
+<?php
+
+namespace Foo;
+
+use Tebru\Executioner;
+use Tebru\Executioner\Delegate;
+
+class Bar implements Attemptor
+{
+    public function __invoke(Baz $baz)
+    {
+        return $baz->doSomething();
+    }
+    
+    public function getRetryableExceptions()
+    {
+        // this is the same as returning []
+        return [new DelegateException(\Exception::class)];
+    }
+    
+    public function getImmediatelyFailableExceptions()
+    {
+        return [
+            new DelegateException(
+                \UnexpectedArgumentException::class,
+                function () { // do something else on UnexpectedArgumentException }
+            )
+        ];
+    }
+    
+    public function getRetryableReturns()
+    {
+        return [false, 0, null];
+    }
+}
+```
+
+This Bar object could be set on or passed into the executor instead of an anonymous function. Can also choose to implement fewer interfaces if needed.
+
+## Available Executor Methods
+There are other methods available on an Executor that haven't been referenced yet.
+
+### Sleep
+This method will create a `\Tebru\Executioner\Strategy\Wait\StaticWaitStrategy` with the number of seconds passed in.
+
+```
+$executor->sleep(2);
+```
+
+### Limit
+This method  will create a `\Tebru\Executioner\Strategy\Termination\AttemptBoundStrategy` with the max number attempts allowed.
+
+```
+$executor->limit(5);
+```
+
+### Cleanup
+This method accepts a callable which will get run before the return of `execute()`.
+
+```
+$executor->cleanup(function () use ($logger) { $logger->info('Logging'); });
+```
