@@ -75,19 +75,6 @@ class ExceptionLogger implements LoggerInterface
     }
 
     /**
-     * Set the logger
-     *
-     * @param LoggerInterface $logger
-     *
-     * @return $this
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
-        return $this;
-    }
-
-    /**
      * Get the log level
      *
      * @return string
@@ -98,19 +85,6 @@ class ExceptionLogger implements LoggerInterface
     }
 
     /**
-     * Set the log level
-     *
-     * @param string $logLevel
-     *
-     * @return $this
-     */
-    public function setLogLevel($logLevel)
-    {
-        $this->logLevel = $logLevel;
-        return $this;
-    }
-
-    /**
      * Get the error message
      *
      * @return string
@@ -118,20 +92,6 @@ class ExceptionLogger implements LoggerInterface
     public function getErrorMessage()
     {
         return (string)$this->errorMessage;
-    }
-
-    /**
-     * Set the error message
-     *
-     * @param string $errorMessage
-     *
-     * @return $this
-     */
-    public function setErrorMessage($errorMessage)
-    {
-        $this->errorMessage = (string)$errorMessage;
-
-        return $this;
     }
 
     /**

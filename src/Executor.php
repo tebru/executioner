@@ -181,42 +181,6 @@ class Executor
     }
 
     /**
-     * Set the logger error message
-     *
-     * @param string $errorMessage
-     *
-     * @return $this
-     */
-    public function setErrorMessage($errorMessage)
-    {
-        if (null === $this->logger) {
-            throw new BadMethodCallException('Logger must not be null');
-        }
-
-        $this->logger->setErrorMessage($errorMessage);
-
-        return $this;
-    }
-
-    /**
-     * Set the log level for the logger
-     *
-     * @param string|int $logLevel
-     *
-     * @return $this
-     */
-    public function setLogLevel($logLevel)
-    {
-        if (null === $this->logger) {
-            throw new BadMethodCallException('Logger must not be null');
-        }
-
-        $this->logger->setLogLevel($logLevel);
-
-        return $this;
-    }
-
-    /**
      * Set retryable exceptions
      *
      * If string[] is passed in, will create @see \Tebru\Executioner\Delegate\ExceptionDelegate objects with
