@@ -11,7 +11,7 @@ Here is a code sample, further descriptions are below
 
 ```
 $attemptor = new \Foo\Bar\BazAttemptor();
-$waitStrategy = new \Tebru\Executioner\Strategy\Wait\FibonacciWait();
+$waitStrategy = new \Tebru\Executioner\Strategy\Wait\FibonacciWaitStrategy();
 $terminationStrategy = new \Tebru\Executioner\Strategy\Termination\AttemptBound(5);
 $logger = new \Tebru\Executioner\Logger\ExceptionLogger(new Psr\Log\NullLogger(), Psr\LogLevel::ERROR, 'My custom error message');
 
@@ -21,7 +21,7 @@ $executor->execute($attemptor, $logger);
 ```
 
 ### Exception Delegator
-There is a class `Tebru\Executioner\Delegate\DelegateException` that shows an example usage of the `Tebru\Executioner\ExceptionDelegator` interface.
+There is a class `Tebru\Executioner\Delegate\ExceptionDelegate` that shows an example usage of the `Tebru\Executioner\ExceptionDelegator` interface.
 
 This class aims to provide a way to execute a closure if the exception passed into the delegate method matches the type of the exception.
 
@@ -43,7 +43,7 @@ This should return an array of `ExceptionDelegator` objects.  If there are excep
 
 ```
 return [
-    new \Tebru\Executioner\Delegate\DelegateException(
+    new \Tebru\Executioner\Delegate\ExceptionDelegate(
         '\Foo\Bar\BazException',
         function (BazException $exception) {
             $this->cleanupMethod();
@@ -57,13 +57,13 @@ This should return an array of `ExceptionDelegator` objects. If this method retu
 
 ```
 return [
-    new \Tebru\Executioner\Delegate\DelegateException(
+    new \Tebru\Executioner\Delegate\ExceptionDelegate(
         '\My\Catchable\Exception',
         function (Exception $exception) {
             $this->doSomething();
         }
     ),
-    new \Tebru\Executioner\Delegate\DelegateException(
+    new \Tebru\Executioner\Delegate\ExceptionDelegate(
         '\Another\Catchable\Exception',
         new \Tebru\Executioner\Closure\NullClosure()
     ),

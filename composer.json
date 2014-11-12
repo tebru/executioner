@@ -20,7 +20,7 @@
     "autoload": {
         "psr-4": {
             "Tebru\\Executioner\\": "src/",
-            "Tebru\\Executioner\\Test\\": "tests/"
+            "Tebru\\Executioner\\Test\\": "tests/UnitTests"
         }
     }
 }

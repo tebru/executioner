@@ -26,15 +26,14 @@ class ExecutorFactory
      * @param ExceptionLogger $logger
      * @param WaitStrategy $waitStrategy
      * @param TerminationStrategy $terminationStrategy
-     * @param Attemptor $attemptor
-     *
+     * @param callable $attemptor
      * @return Executor
      */
     public function make(
-        ExceptionLogger $logger,
-        WaitStrategy $waitStrategy,
-        TerminationStrategy $terminationStrategy,
-        Attemptor $attemptor = null
+        ExceptionLogger $logger = null,
+        WaitStrategy $waitStrategy = null,
+        TerminationStrategy $terminationStrategy = null,
+        callable $attemptor = null
     ) {
         return new Executor($logger, $waitStrategy, $terminationStrategy, $attemptor);
     }

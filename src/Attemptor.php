@@ -5,66 +5,19 @@
 
 namespace Tebru\Executioner;
 
+use Tebru\Executioner\Attemptor\ExceptionRetryable;
+use Tebru\Executioner\Attemptor\ImmediatelyFailable;
+use Tebru\Executioner\Attemptor\Invokeable;
+use Tebru\Executioner\Attemptor\ReturnRetryable;
+
 /**
  * Interface Attemptor
  *
- * Classes that implement this interface will be usable with Tebru\Executioner\Executor
+ * Attemptor interface uses all available interfaces. May serve as a sample or
+ * shortcut to implementing available interfaces.
  *
  * @author Nate Brunette <n@tebru.net>
  */
-interface Attemptor
+interface Attemptor extends Invokeable, ExceptionRetryable, ReturnRetryable, ImmediatelyFailable
 {
-    /**
-     * Return an array of values from attemptOperation() that should
-     * trigger a retry
-     *
-     * Examples:
-     *     return [null]
-     *     return [false, null, -1, 'oops'];
-     *
-     * @return array
-     */
-    public function getFailureValues();
-
-    /**
-     * Put code here that would normally go in a try block
-     *
-     * @return mixed
-     */
-    public function attemptOperation();
-
-    /**
-     * Set up exceptions that should be retried
-     *
-     * If an empty array is returned, we will assume that all exceptions that aren't handled
-     * as failure exceptions will be caught and retried.
-     *
-     * If null is returned, we're not going to retry on any exceptions and should rethrow any
-     * exception encountered.
-     *
-     * The expected return format is an array of Tebru\Executioner\ExceptionDelegator objects.
-     * Use a Tebru\Executioner\Closure\NullClosure when there isn't additional handler code
-     * needed.
-     *
-     * @return ExceptionDelegator[]|null
-     */
-    public function getRetryableExceptions();
-
-    /**
-     * Set up exceptions that should fail immediately without retry
-     *
-     * The expected return format is an array of Tebru\Executioner\ExceptionDelegator objects.
-     * Use a Tebru\Executioner\Closure\NullClosure when there isn't additional handler code
-     * needed.
-     *
-     * @return ExceptionDelegator[]
-     */
-    public function getFailureExceptions();
-
-    /**
-     * Put code here that should be run if we retry and fail
-     *
-     * @return mixed
-     */
-    public function exitOperation();
-} 
+}

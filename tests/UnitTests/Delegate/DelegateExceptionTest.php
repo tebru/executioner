@@ -9,7 +9,7 @@ use Exception;
 use Mockery;
 use PHPUnit_Framework_TestCase;
 use Tebru\Executioner\Closure\NullClosure;
-use Tebru\Executioner\Delegate\DelegateException;
+use Tebru\Executioner\Delegate\ExceptionDelegate;
 
 /**
  * Class DelegateExceptionTest
@@ -29,7 +29,7 @@ class DelegateExceptionTest extends PHPUnit_Framework_TestCase
         $exception = new Exception();
 
         $nullClosure->shouldReceive('__invoke')->once()->withArgs([$exception]);
-        $delegate = new DelegateException('\Exception', $nullClosure);
+        $delegate = new ExceptionDelegate('\Exception', $nullClosure);
         $response = $delegate->delegate($exception);
 
         $this->assertTrue($response);
@@ -39,7 +39,7 @@ class DelegateExceptionTest extends PHPUnit_Framework_TestCase
     {
         $nullClosure = Mockery::mock(new NullClosure());
 
-        $delegate = new DelegateException('\UnexpectedValueException', $nullClosure);
+        $delegate = new ExceptionDelegate('\UnexpectedValueException', $nullClosure);
         $response = $delegate->delegate(new Exception());
 
         $this->assertFalse($response);
