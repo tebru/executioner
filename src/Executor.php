@@ -372,12 +372,12 @@ class Executor
         // if the attempt return is not in list of returns we should retry on, just return the result
         $isRetryableFailure = in_array($result, $this->getRetryableReturns(), true);
 
-        if (false === $isRetryableFailure) {
-            return $result;
+        // if result is in the array of failure values
+        if (true === $isRetryableFailure) {
+            return $this->handleFailure();
         }
 
-        // otherwise start retry
-        return $this->handleFailure();
+        return $result;
     }
 
     /**
