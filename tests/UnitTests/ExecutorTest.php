@@ -66,6 +66,25 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('test', $result);
     }
 
+    public function testAttemptorWillUseArguments()
+    {
+        $attemptor = Mockery::mock(Invokeable::class);
+        $attemptor->shouldReceive(self::METHOD_INVOKE)->times(1)->withArgs(['arg1', 'arg2'])->andReturn('test');
+
+        $executor = new Executor();
+        $result = $executor->execute($attemptor, ['arg1', 'arg2']);
+
+        $this->assertEquals('test', $result);
+    }
+
+    public function testAttemptorArgumentsDoNotCauseErrors()
+    {
+        $executor = new Executor();
+        $result = $executor->execute(function () { return 'test'; }, ['arg1', 'arg2']);
+
+        $this->assertEquals('test', $result);
+    }
+
     public function testCanSetRetryableException()
     {
         $attemptor = Mockery::mock(Invokeable::class);

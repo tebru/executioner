@@ -38,6 +38,13 @@ class Executor
     private $attemptor;
 
     /**
+     * Arguments that should be passed into the attemptor
+     *
+     * @var array $attemptorArguments
+     */
+    private $attemptorArguments = [];
+
+    /**
      * A LoggerInterface containing defaults for exception logging
      *
      * @var ExceptionLogger $logger
@@ -316,10 +323,10 @@ class Executor
      * Try to execute code
      *
      * @param callable $attemptor The code getting attempted
-     *
+     * @param array $attemptorArguments
      * @return mixed
      */
-    public function execute(callable $attemptor = null)
+    public function execute($attemptor = null, array $attemptorArguments = [])
     {
         if (null !== $attemptor) {
             $this->attemptor = $attemptor;
@@ -328,6 +335,8 @@ class Executor
         if (null === $this->attemptor) {
             throw new BadMethodCallException('Attemptor must not be null');
         }
+
+        $this->attemptorArguments = $attemptorArguments;
 
         // handles logic for starting the process before any retrying occurs
         $this->reset();
@@ -353,11 +362,9 @@ class Executor
      */
     private function doExecute()
     {
-        $attemptor = $this->attemptor;
-
         // attempt execution
         try {
-            $result = $attemptor();
+            $result = call_user_func_array($this->attemptor, $this->attemptorArguments);
         } catch (Exception $exception) {
             return $this->handleFailure($exception);
         }
