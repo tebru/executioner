@@ -79,3 +79,23 @@ $executor = new Executor();
 $executor->addSubscriber(new ReturnSubscriber([false]));
 $result = $executor->execute(2, function () { return false; });
 ```
+### Shortcuts
+To make life easier, there are some helper methods to create some of the included subscribers
+
+Add a LoggerSubscriber
+
+```
+Executor::addLogger($name, LoggerInterface $logger)
+```
+
+Add a WaitSubscriber using the StaticWaitStrategy
+
+```
+Executor::addWait($seconds)
+```
+
+Add a WaitSubscriber
+
+```
+Executor::addWaitStrategy(WaitStrategy $waitStrategy)
+```

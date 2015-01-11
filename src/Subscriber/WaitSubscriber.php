@@ -33,7 +33,7 @@ class WaitSubscriber implements EventSubscriberInterface
     public function __construct(WaitStrategy $waitStrategy = null)
     {
         if (null === $waitStrategy) {
-            $waitStrategy = new ExponentialBackoffStrategy(1);
+            $waitStrategy = new ExponentialBackoffStrategy();
         }
 
         $this->waitStrategy = $waitStrategy;

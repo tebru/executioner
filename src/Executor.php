@@ -6,6 +6,7 @@
 namespace Tebru\Executioner;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -15,6 +16,10 @@ use Tebru\Executioner\Event\EndAttemptEvent;
 use Tebru\Executioner\Event\FailedAttemptEvent;
 use Tebru\Executioner\Exception\FailedException;
 use Tebru\Executioner\Exception\InvalidArgumentException;
+use Tebru\Executioner\Strategy\StaticWaitStrategy;
+use Tebru\Executioner\Strategy\WaitStrategy;
+use Tebru\Executioner\Subscriber\LoggerSubscriber;
+use Tebru\Executioner\Subscriber\WaitSubscriber;
 
 /**
  * Class Executor
@@ -56,7 +61,8 @@ class Executor
      *
      * @param EventDispatcherInterface $eventDispatcher
      */
-    public function __construct(EventDispatcherInterface $eventDispatcher = null) {
+    public function __construct(EventDispatcherInterface $eventDispatcher = null)
+    {
         if (null === $eventDispatcher) {
             $eventDispatcher = new EventDispatcher();
         }
@@ -102,6 +108,46 @@ class Executor
         }
 
         return $result;
+    }
+
+    /**
+     * Add a LoggerSubscriber
+     *
+     * @param string $name
+     * @param LoggerInterface $logger
+     * @return $this
+     */
+    public function addLogger($name, LoggerInterface $logger)
+    {
+        $this->addSubscriber(new LoggerSubscriber($name, $logger));
+
+        return $this;
+    }
+
+    /**
+     * Add a WaitSubscriber using a StaticWaitStrategy
+     *
+     * @param int $seconds
+     * @return $this
+     */
+    public function addWait($seconds)
+    {
+        $this->addSubscriber(new WaitSubscriber(new StaticWaitStrategy($seconds)));
+
+        return $this;
+    }
+
+    /**
+     * Add a WaitSubscriber using passed in WaitStrategy
+     *
+     * @param WaitStrategy $waitStrategy
+     * @return $this
+     */
+    public function addWaitStrategy(WaitStrategy $waitStrategy)
+    {
+        $this->addSubscriber(new WaitSubscriber($waitStrategy));
+
+        return $this;
     }
 
     /**

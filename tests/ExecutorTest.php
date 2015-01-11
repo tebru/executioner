@@ -35,11 +35,13 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
 
     public function testFailPass()
     {
-        $executor = new Executor();
         $callable = new MockeryCallableMock();
         $callable->shouldBeCalled()->times(1)->withNoArgs()->andThrow(new Exception());
         $callable->shouldBeCalled()->times(1)->withNoArgs()->andReturn(true);
+
+        $executor = new Executor();
         $result = $executor->execute(2, $callable);
+
         $this->assertTrue($result);
     }
 
@@ -48,9 +50,10 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
      */
     public function testNeverPass()
     {
-        $executor = new Executor();
         $callable = new MockeryCallableMock();
         $callable->shouldBeCalled()->times(3)->withNoArgs()->andThrow(new Exception());
+
+        $executor = new Executor();
         $executor->execute(2, $callable);
     }
 
