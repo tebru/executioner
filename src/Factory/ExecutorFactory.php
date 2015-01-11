@@ -18,12 +18,31 @@ use Tebru\Executioner\Executor;
 class ExecutorFactory
 {
     /**
+     * @var EventDispatcher $eventDispatcher
+     */
+    private $eventDispatcher;
+
+    /**
+     * Constructor
+     *
+     * @param EventDispatcher $eventDispatcher
+     */
+    public function __construct(EventDispatcher $eventDispatcher = null)
+    {
+        $this->eventDispatcher = $eventDispatcher;
+    }
+
+    /**
      * Make an Executor
      *
      * @param EventDispatcher $eventDispatcher
      * @return Executor
      */
-    public static function make(EventDispatcher $eventDispatcher = null) {
-        return new Executor($eventDispatcher);
+    public function make(EventDispatcher $eventDispatcher = null) {
+        if (null !== $eventDispatcher) {
+            return new Executor($eventDispatcher);
+        }
+
+        return new Executor($this->eventDispatcher);
     }
 } 
