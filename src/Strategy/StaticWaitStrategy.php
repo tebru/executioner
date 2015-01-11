@@ -24,7 +24,7 @@ class StaticWaitStrategy implements WaitStrategy
      *
      * @param int $waitLength
      */
-    public function __construct($waitLength)
+    public function __construct($waitLength = 1)
     {
         $this->waitLength = $waitLength;
     }

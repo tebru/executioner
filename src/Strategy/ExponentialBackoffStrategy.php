@@ -39,7 +39,7 @@ class ExponentialBackoffStrategy implements WaitStrategy
      * @param int $waitPerSlot
      * @param int $maxWait 10 minutes by default
      */
-    public function __construct($waitPerSlot, $maxWait = 600)
+    public function __construct($waitPerSlot = 1, $maxWait = 600)
     {
         $this->waitPerSlot = $waitPerSlot;
         $this->maxWait = $maxWait;
