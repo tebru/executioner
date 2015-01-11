@@ -23,7 +23,7 @@ class ExecutorFactory
      * @param EventDispatcher $eventDispatcher
      * @return Executor
      */
-    public function make(EventDispatcher $eventDispatcher = null) {
+    public static function make(EventDispatcher $eventDispatcher = null) {
         return new Executor($eventDispatcher);
     }
 } 
