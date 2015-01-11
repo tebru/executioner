@@ -3,12 +3,14 @@
     "description": "Provides a library for handling PHP exceptions when you would like to retry execution.",
     "require": {
         "php": ">=5.4",
-        "psr/log": "1.0.*"
+        "psr/log": "1.0.*",
+        "symfony/event-dispatcher": "2.6.*"
     },
     "require-dev": {
         "php": ">=5.5",
-        "phpunit/phpunit": "dev-master",
-        "mockery/mockery": "dev-master"
+        "phpunit/phpunit": "4.4.*",
+        "mockery/mockery": "dev-master",
+        "akamon/mockery-callable-mock": "dev-master"
     },
     "license": "MIT",
     "authors": [
@@ -20,7 +22,7 @@
     "autoload": {
         "psr-4": {
             "Tebru\\Executioner\\": "src/",
-            "Tebru\\Executioner\\Test\\": "tests/UnitTests"
+            "Tebru\\Executioner\\Test\\": "tests/"
         }
     }
 }

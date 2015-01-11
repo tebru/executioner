@@ -15,30 +15,12 @@ namespace Tebru\Executioner\Strategy;
 interface WaitStrategy
 {
     /**
-     * Wait for a set number of seconds
-     *
-     * @return null
+     * Number of microseconds in one second
+     */
+    const MICROSECONDS_PER_SECOND = 1000000;
+
+    /**
+     * Sleep method
      */
     public function wait();
-
-    /**
-     * Get the number of seconds we should wait
-     *
-     * @return mixed
-     */
-    public function getWaitTime();
-
-    /**
-     * Increment wait time based on strategy
-     *
-     * @return mixed
-     */
-    public function incrementWait();
-
-    /**
-     * Reset this strategy
-     *
-     * @return null
-     */
-    public function reset();
 }

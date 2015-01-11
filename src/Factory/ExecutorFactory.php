@@ -5,36 +5,25 @@
 
 namespace Tebru\Executioner\Factory;
 
-use Tebru\Executioner\Attemptor;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Tebru\Executioner\Executor;
-use Tebru\Executioner\Logger\ExceptionLogger;
-use Tebru\Executioner\Strategy\TerminationStrategy;
-use Tebru\Executioner\Strategy\WaitStrategy;
 
 /**
  * Class ExecutorFactory
  *
- * Creates ExecutorFactories
+ * Creates an Executor
  *
  * @author Nate Brunette <n@tebru.net>
  */
 class ExecutorFactory
 {
     /**
-     * Make an ExecutorFactory
+     * Make an Executor
      *
-     * @param ExceptionLogger $logger
-     * @param WaitStrategy $waitStrategy
-     * @param TerminationStrategy $terminationStrategy
-     * @param callable $attemptor
+     * @param EventDispatcher $eventDispatcher
      * @return Executor
      */
-    public function make(
-        ExceptionLogger $logger = null,
-        WaitStrategy $waitStrategy = null,
-        TerminationStrategy $terminationStrategy = null,
-        callable $attemptor = null
-    ) {
-        return new Executor($logger, $waitStrategy, $terminationStrategy, $attemptor);
+    public function make(EventDispatcher $eventDispatcher = null) {
+        return new Executor($eventDispatcher);
     }
 } 

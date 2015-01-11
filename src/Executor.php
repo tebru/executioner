@@ -5,22 +5,16 @@
 
 namespace Tebru\Executioner;
 
-use BadMethodCallException;
 use Exception;
-use Psr\Log\LogLevel;
-use Tebru\Executioner\Attemptor\ExceptionRetryable;
-use Tebru\Executioner\Attemptor\ImmediatelyFailable;
-use Tebru\Executioner\Attemptor\ReturnRetryable;
-use Tebru\Executioner\Delegate\ExceptionDelegate;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Tebru\Executioner\Event\AfterAttemptEvent;
+use Tebru\Executioner\Event\BeforeAttemptEvent;
+use Tebru\Executioner\Event\EndAttemptEvent;
+use Tebru\Executioner\Event\FailedAttemptEvent;
 use Tebru\Executioner\Exception\FailedException;
-use Tebru\Executioner\Exception\TypeMismatchException;
-use Tebru\Executioner\Strategy\AttemptAwareTerminationStrategy;
-use Tebru\Executioner\Strategy\Termination\AttemptBoundTerminationStrategy;
-use Tebru\Executioner\Strategy\TerminationStrategy;
-use Tebru\Executioner\Strategy\TimeAwareTerminationStrategy;
-use Tebru\Executioner\Strategy\Wait\StaticWaitStrategy;
-use Tebru\Executioner\Strategy\WaitStrategy;
-use Tebru\Executioner\Logger\ExceptionLogger;
+use Tebru\Executioner\Exception\InvalidArgumentException;
 
 /**
  * Class Executor
@@ -31,569 +25,179 @@ use Tebru\Executioner\Logger\ExceptionLogger;
  */
 class Executor
 {
-    /**
-     * Callable to execute arbitrary code
-     *
-     * @var callable $attemptor
+    /**#@
+     * Events
      */
-    private $attemptor;
+    const EVENT_BEFORE_ATTEMPT = 'beforeAttempt';
+    const EVENT_AFTER_ATTEMPT = 'afterAttempt';
+    const EVENT_FAILED_ATTEMPT = 'failedAttempt';
+    const EVENT_END_ATTEMPT = 'endAttempt';
+    /**#@-*/
 
     /**
-     * Arguments that should be passed into the attemptor
-     *
-     * @var array $attemptorArguments
+     * @var array $events
      */
-    private $attemptorArguments = [];
+    static public  $events = [
+        self::EVENT_BEFORE_ATTEMPT,
+        self::EVENT_AFTER_ATTEMPT,
+        self::EVENT_FAILED_ATTEMPT,
+        self::EVENT_END_ATTEMPT,
+    ];
 
     /**
-     * A LoggerInterface containing defaults for exception logging
-     *
-     * @var ExceptionLogger $logger
+     * @var EventDispatcherInterface $eventDispatcher
      */
-    private $logger;
-
-    /**
-     * Determines how long we should wait between attempts
-     *
-     * @var WaitStrategy $waitStrategy
-     */
-    private $waitStrategy;
-
-    /**
-     * Determines when we're done attempting
-     *
-     * @var TerminationStrategy terminationStrategy
-     */
-    private $terminationStrategy;
-
-    /**
-     * An array of exceptions we should retry on
-     *
-     * An empty array signifies we should retry on every exception
-     *
-     * @var array $retryableExceptions
-     * @see \Tebru\Executioner\Attemptor\ExceptionRetryable
-     */
-    private $retryableExceptions = [];
-
-    /**
-     * An array of return values we should retry on
-     *
-     * @var array $retryableReturns
-     * @see \Tebru\Executioner\Attemptor\ReturnRetryable
-     */
-    private $retryableReturns = [];
-
-    /**
-     * An array of exceptions that should fail without retrying
-     *
-     * @var array $immediatelyFailableExceptions
-     * @see \Tebru\Executioner\Attemptor\ImmediatelyFailable
-     */
-    private $immediatelyFailableExceptions = [];
-
-    /**
-     * A callable that is executed before returning from execute
-     *
-     * @var callable $cleanupCallback
-     */
-    private $cleanupCallback;
+    private $eventDispatcher;
 
     /**
      * Constructor
      *
-     * @param ExceptionLogger $logger
-     * @param WaitStrategy $waitStrategy
-     * @param TerminationStrategy $terminationStrategy
-     * @param callable $attemptor
+     * Creates an EventDispatcher by default
+     *
+     * @param EventDispatcherInterface $eventDispatcher
      */
-    public function __construct(
-        ExceptionLogger $logger = null,
-        WaitStrategy $waitStrategy = null,
-        TerminationStrategy $terminationStrategy = null,
-        callable $attemptor = null
-    ) {
-        $this->logger = $logger;
-        $this->waitStrategy = $waitStrategy;
-        $this->terminationStrategy = $terminationStrategy;
-        $this->attemptor = $attemptor;
-    }
-
-    /**
-     * Will sleep for $seconds between attempts
-     *
-     * Shortcut to set a static wait strategy
-     *
-     * @param $seconds
-     * @return $this
-     */
-    public function sleep($seconds)
-    {
-        $this->setWaitStrategy(new StaticWaitStrategy($seconds));
-
-        return $this;
-    }
-
-    /**
-     * Will stop after $attempts number of attempts
-     *
-     * Shortcut to set an attempt bound termination strategy
-     *
-     * @param $attempts
-     * @return $this
-     */
-    public function limit($attempts)
-    {
-        $this->setTerminationStrategy(new AttemptBoundTerminationStrategy($attempts));
-
-        return $this;
-    }
-
-    /**
-     * Set a wait strategy
-     *
-     * @param WaitStrategy $waitStrategy
-     * @return $this
-     */
-    public function setWaitStrategy(WaitStrategy $waitStrategy)
-    {
-        $this->waitStrategy = $waitStrategy;
-
-        return $this;
-    }
-
-    /**
-     * Set a termination strategy
-     *
-     * @param TerminationStrategy $terminationStrategy
-     * @return $this
-     */
-    public function setTerminationStrategy(TerminationStrategy $terminationStrategy)
-    {
-        $this->terminationStrategy = $terminationStrategy;
-
-        return $this;
-    }
-
-    /**
-     * Set a logger
-     *
-     * @param ExceptionLogger $logger
-     * @return $this
-     */
-    public function setLogger(ExceptionLogger $logger)
-    {
-        $this->logger = $logger;
-
-        return $this;
-    }
-
-    /**
-     * Set retryable exceptions
-     *
-     * If string[] is passed in, will create @see \Tebru\Executioner\Delegate\ExceptionDelegate objects with
-     * a @see \Tebru\Executioner\Closure\NullClosure as the callback.
-     *
-     * @param ExceptionDelegate[]|string[] $retryableExceptions
-     * @return $this
-     * @throws TypeMismatchException
-     */
-    public function setRetryableExceptions(array $retryableExceptions)
-    {
-        $this->retryableExceptions = $this->setExceptionDelegates($retryableExceptions);
-
-        return $this;
-    }
-
-    /**
-     * Set retryable returns
-     *
-     * @param array $retryableReturns
-     * @return $this
-     */
-    public function setRetryableReturns(array $retryableReturns)
-    {
-        $this->retryableReturns = $retryableReturns;
-
-        return $this;
-    }
-
-    /**
-     * Set immediately failable exceptions
-     *
-     * If string[] is passed in, will create @see \Tebru\Executioner\Delegate\ExceptionDelegate objects with
-     * a @see \Tebru\Executioner\Closure\NullClosure as the callback.
-     *
-     * @param array $immediatelyFailableExceptions
-     * @return $this
-     * @throws TypeMismatchException
-     */
-    public function setImmediatelyFailableExceptions(array $immediatelyFailableExceptions)
-    {
-        $this->immediatelyFailableExceptions = $this->setExceptionDelegates($immediatelyFailableExceptions);
-
-        return $this;
-    }
-
-    /**
-     * Set cleanup callback
-     *
-     * @param callable $cleanupCallback
-     * @return $this
-     */
-    public function setCleanupCallback(callable $cleanupCallback)
-    {
-        $this->cleanupCallback = $cleanupCallback;
-
-        return $this;
-    }
-
-    /**
-     * Get retryable exceptions
-     *
-     * @return ExceptionDelegator[]
-     */
-    private function getRetryableExceptions()
-    {
-        if ($this->attemptor instanceof ExceptionRetryable) {
-            return $this->attemptor->getRetryableExceptions();
+    public function __construct(EventDispatcherInterface $eventDispatcher = null) {
+        if (null === $eventDispatcher) {
+            $eventDispatcher = new EventDispatcher();
         }
 
-        return $this->retryableExceptions;
-    }
-
-    /**
-     * Get retryable returns
-     *
-     * @return array
-     */
-    private function getRetryableReturns()
-    {
-        if ($this->attemptor instanceof ReturnRetryable) {
-            return $this->attemptor->getRetryableReturns();
-        }
-
-        return $this->retryableReturns;
-    }
-
-    /**
-     * Get immediately failable exceptions
-     *
-     * @return ExceptionDelegator[]
-     */
-    private function getImmediatelyFailableExceptions()
-    {
-        if ($this->attemptor instanceof ImmediatelyFailable) {
-            return $this->attemptor->getImmediatelyFailableExceptions();
-        }
-
-        return $this->immediatelyFailableExceptions;
-    }
-
-    /**
-     * Helper method that creates an ExceptionDelegate[]
-     *
-     * If a string value is passed in, it will create an ExceptionDelegate object.
-     *
-     * @param array $exceptionDelegates
-     * @return ExceptionDelegate[]
-     * @throws TypeMismatchException
-     */
-    private function setExceptionDelegates(array $exceptionDelegates)
-    {
-        foreach ($exceptionDelegates as $key => $exceptionDelegate) {
-            // if it's a string, create a new ExceptionDelegate
-            if (is_string($exceptionDelegate)) {
-                $exceptionDelegates[$key] = new ExceptionDelegate($exceptionDelegate);
-
-                continue;
-            }
-
-            // if it is not the right type, throw an exception
-            if (!$exceptionDelegate instanceof ExceptionDelegator) {
-                throw new TypeMismatchException(sprintf(
-                    'Expected "Tebru\Executioner\ExceptionDelegator" or string, got "%s"', get_class($exceptionDelegate)
-                ));
-            }
-        }
-
-        return $exceptionDelegates;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
      * Try to execute code
      *
-     * @param callable $attemptor The code getting attempted
-     * @param array $attemptorArguments
+     * @param int $attempts
+     * @param callable $attempter The code getting attempted
      * @return mixed
+     * @throws FailedException If we can't continue retrying
      */
-    public function execute($attemptor = null, array $attemptorArguments = [])
+    public function execute($attempts, callable $attempter)
     {
-        if (null !== $attemptor) {
-            $this->attemptor = $attemptor;
-        }
-
-        if (null === $this->attemptor) {
-            throw new BadMethodCallException('Attemptor must not be null');
-        }
-
-        $this->attemptorArguments = $attemptorArguments;
-
-        // handles logic for starting the process before any retrying occurs
-        $this->reset();
-
-        // start recursive execution process and return the result
-        $result = $this->doExecute();
-
-        // call cleanup callback
-        $cleanupCallback = $this->cleanupCallback;
-        if (is_callable($cleanupCallback)) {
-            $cleanupCallback();
-        }
-
-        return $result;
-    }
-
-    /**
-     * Recursively attempt execution
-     *
-     * @return mixed
-     *
-     * @throws Exception If we could not determine how to handle a thrown exception
-     */
-    private function doExecute()
-    {
-        // attempt execution
         try {
-            $result = call_user_func_array($this->attemptor, $this->attemptorArguments);
+            $beforeAttemptEvent = new BeforeAttemptEvent($attempts);
+            $this->eventDispatcher->dispatch(self::EVENT_BEFORE_ATTEMPT, $beforeAttemptEvent);
+
+            // make an attempt
+            $result = $attempter();
+
+            $afterAttemptEvent = new AfterAttemptEvent($attempts - 1, $result);
+            $this->eventDispatcher->dispatch(self::EVENT_AFTER_ATTEMPT, $afterAttemptEvent);
         } catch (Exception $exception) {
-            return $this->handleFailure($exception);
-        }
+            // if we're out of tries, quit
+            if (0 === $attempts) {
+                $endEvent = new EndAttemptEvent($attempts, $exception);
+                $this->eventDispatcher->dispatch(self::EVENT_END_ATTEMPT, $endEvent);
 
-        // if the attempt return is not in list of returns we should retry on, just return the result
-        $isRetryableFailure = in_array($result, $this->getRetryableReturns(), true);
+                throw new FailedException('Could not complete execution', 0, $exception);
+            }
 
-        // if result is in the array of failure values
-        if (true === $isRetryableFailure) {
-            return $this->handleFailure();
+            $attempts--;
+
+            $failedAttemptEvent = new FailedAttemptEvent($attempts, $exception);
+            $this->eventDispatcher->dispatch(self::EVENT_FAILED_ATTEMPT, $failedAttemptEvent);
+
+            // recursion
+            return $this->execute($attempts, $attempter);
         }
 
         return $result;
     }
 
     /**
-     * An exception was thrown or failure value was returned
+     * Add a listener
      *
-     * @param Exception $exception
-     *
-     * @return mixed
-     *
-     * @throws Exception If we cannot handle the exception
-     * @throws TypeMismatchException If array values of not ExceptionDelegates
+     * @param string $name
+     * @param callable $listener
+     * @param int $priority
+     * @return $this
      */
-    private function handleFailure(Exception $exception = null)
+    public function addListener($name, callable $listener, $priority = 0)
     {
-        // tell termination strategy an attempt has been made
-        $this->addAttempt();
-
-        // if an exception wasn't thrown, just retry
-        if (null === $exception) {
-            return $this->retry();
+        if (!in_array($name, self::$events)) {
+            throw new InvalidArgumentException(sprintf('Event %s does not exist', $name));
         }
 
-        // check for exception that should fail immediately without retry
-        $executedCallback = $this->executeExceptionDelegates($this->getImmediatelyFailableExceptions(), $exception);
+        $this->eventDispatcher->addListener($name, $listener, $priority);
 
-        // if callbacks were executed, we're immediately failing
-        if (true === $executedCallback) {
-            $this->log('error', '[failure exception found]', ['exception' => $exception]);
-
-            // rethrow
-            throw $exception;
-        }
-
-        // if no retryable exceptions are set, assume we're retrying on all other exceptions
-        $retryableExceptions = $this->getRetryableExceptions();
-        if (0 === count($retryableExceptions)) {
-            return $this->retry($exception);
-        }
-
-        // otherwise, we'll only retry on the exceptions that have been set
-        $executedCallback = $this->executeExceptionDelegates($retryableExceptions, $exception);
-
-        // if the exception matches an exception we're retrying on
-        if (true === $executedCallback) {
-            return $this->retry($exception);
-        }
-
-        //log that we were unable to handle the exception
-        $this->log(LogLevel::ERROR, '[no predetermined handlers]', ['exception' => $exception]);
-
-        // rethrow exception
-        throw $exception;
+        return $this;
     }
 
     /**
-     * Loop through array of DelegateExceptions and call delegate
+     * Add a listener to the before attempt event
      *
-     * Returns true if any callbacks were executed and false otherwise
-     *
-     * @param ExceptionDelegator[] $exceptionDelegates
-     * @param Exception $exception
-     *
-     * @throws TypeMismatchException
-     * @return bool
+     * @param callable $listener
+     * @param int $priority
+     * @return $this
      */
-    private function executeExceptionDelegates(array $exceptionDelegates, Exception $exception = null)
+    public function onBeforeAttempt(callable $listener, $priority = 0)
     {
-        $exceptionCallbacksCalled = 0;
+        $this->addListener(self::EVENT_BEFORE_ATTEMPT, $listener, $priority);
 
-        // check if we're not retrying this kind of exception
-        foreach ($exceptionDelegates as $exceptionDelegate) {
-            // make sure we have the right objects
-            if (!$exceptionDelegate instanceof ExceptionDelegator) {
-                throw new TypeMismatchException(sprintf(
-                    'Expected "Tebru\Executioner\ExceptionDelegator", got "%s"', get_class($exceptionDelegate)
-                ));
-            }
-
-            $calledCallback = $exceptionDelegate->delegate($exception);
-            if (true === $calledCallback) {
-                ++$exceptionCallbacksCalled;
-            }
-        }
-
-        return ($exceptionCallbacksCalled > 0) ? true : false;
+        return $this;
     }
 
     /**
-     * Retry logic
+     * Add a listener to the after attempt event
      *
-     * If we haven't finished attempting execution, wait, retry and log attempt.  If
-     * we have finished attempting, log based on ExceptionLogger values and run cleanup
-     * code.
-     *
-     * @param Exception $exception
-     *
-     * @return mixed
+     * @param callable $listener
+     * @param int $priority
+     * @return $this
      */
-    private function retry(Exception $exception = null)
+    public function onAfterAttempt(callable $listener, $priority = 0)
     {
-        if ($this->hasFinished()) {
-            return $this->retryFinishedAndFailed($exception);
-        }
+        $this->addListener(self::EVENT_AFTER_ATTEMPT, $listener, $priority);
 
-        // log that we failed and are retrying
-        $context = ['exception' => $exception];
-        if ($this->terminationStrategy instanceof AttemptAwareTerminationStrategy) {
-            $context['attempts'] = $this->terminationStrategy->getAttempts();
-        }
-
-        $this->log(LogLevel::INFO, '[retrying]', $context);
-
-        // wait based on strategy
-        $this->wait();
-
-        // retry
-        return $this->doExecute();
+        return $this;
     }
 
     /**
-     * Handles logic for logging failure and returns false
+     * Add a listener to the failed attempt event
      *
-     * @param Exception $exception
-     * @throws FailedException
+     * @param callable $listener
+     * @param int $priority
+     * @return $this
      */
-    private function retryFinishedAndFailed(Exception $exception = null)
+    public function onFailedAttempt(callable $listener, $priority = 0)
     {
-        // we're done attempting, log as an error and exit
-        $context = ['exception' => $exception];
+        $this->addListener(self::EVENT_FAILED_ATTEMPT, $listener, $priority);
 
-        if ($this->terminationStrategy instanceof TimeAwareTerminationStrategy) {
-            $context['startTime'] = $this->terminationStrategy->getStartedTime();
-            $context['endTime'] = $this->terminationStrategy->getCurrentTime();
-        }
-
-        if ($this->terminationStrategy instanceof AttemptAwareTerminationStrategy) {
-            $context['numberOfAttempts'] = $this->terminationStrategy->getAttempts();
-        }
-
-        $this->log(null, null, $context);
-
-        throw new FailedException('Retrying unsuccessful', 0, $exception);
+        return $this;
     }
 
-    /*------------------------------------
-     * PASS-THROUGH TO OTHER OTHER OBJECTS
-     *-----------------------------------*/
-
     /**
-     * Log an error
+     * Add a listener to the end attempt event
      *
-     * @param null $level
-     * @param string $messageSuffix
-     * @param array $context
-     */
-    private function log($level = null, $messageSuffix = '', $context = [])
-    {
-        if (null === $this->logger) {
-            return null;
-        }
-
-        if (null === $level) {
-            $level = $this->logger->getLogLevel();
-        }
-
-        $message = (null === $messageSuffix)
-            ? $this->logger->getErrorMessage()
-            : $this->logger->getErrorMessage() . ' ' . $messageSuffix;
-
-        $this->logger->log($level, $message, $context);
-    }
-
-    /**
-     * Add attempt if termination strategy is attempt aware
-     */
-    private function addAttempt()
-    {
-        if ($this->terminationStrategy instanceof AttemptAwareTerminationStrategy) {
-            $this->terminationStrategy->addAttempt();
-        }
-    }
-
-    /**
-     * Reset if termination and wait strategies exists
-     */
-    private function reset()
-    {
-        if (null !== $this->terminationStrategy) {
-            // tell the termination strategy we're ready to start attempting execution
-            $this->terminationStrategy->reset();
-        }
-
-        if (null !== $this->waitStrategy) {
-            // tell the termination strategy we're ready to start attempting execution
-            $this->waitStrategy->reset();
-        }
-    }
-
-    /**
-     * Returns false if we have not finished or termination strategy not set
+     * @param callable $listener
+     * @param int $priority
      *
-     * @return bool
+     * @return $this
      */
-    private function hasFinished()
+    public function onEndAttempt(callable $listener, $priority = 0)
     {
-        return (null !==$this->terminationStrategy) && $this->terminationStrategy->hasFinished();
+        $this->addListener(self::EVENT_END_ATTEMPT, $listener, $priority);
+
+        return $this;
     }
 
     /**
-     * Wait if strategy exists
+     * Add a subscriber
+     *
+     * @param EventSubscriberInterface $subscriber
+     *
      */
-    private function wait()
+    public function addSubscriber(EventSubscriberInterface $subscriber)
     {
-        if (null !== $this->waitStrategy) {
-            $this->waitStrategy->wait();
-        }
+        $this->eventDispatcher->addSubscriber($subscriber);
+    }
+
+    /**
+     * Get the dispatcher
+     *
+     * @return EventDispatcher|EventDispatcherInterface
+     */
+    public function getDispatcher()
+    {
+        return $this->eventDispatcher;
     }
 }
