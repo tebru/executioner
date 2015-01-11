@@ -12,6 +12,7 @@ use Tebru\Executioner\Attemptor\ExceptionRetryable;
 use Tebru\Executioner\Attemptor\ImmediatelyFailable;
 use Tebru\Executioner\Attemptor\ReturnRetryable;
 use Tebru\Executioner\Delegate\ExceptionDelegate;
+use Tebru\Executioner\Exception\FailedException;
 use Tebru\Executioner\Exception\TypeMismatchException;
 use Tebru\Executioner\Strategy\AttemptAwareTerminationStrategy;
 use Tebru\Executioner\Strategy\Termination\AttemptBoundTerminationStrategy;
@@ -407,7 +408,8 @@ class Executor
         if (true === $executedCallback) {
             $this->log('error', '[failure exception found]', ['exception' => $exception]);
 
-            return false;
+            // rethrow
+            throw $exception;
         }
 
         // if no retryable exceptions are set, assume we're retrying on all other exceptions
@@ -500,7 +502,7 @@ class Executor
      * Handles logic for logging failure and returns false
      *
      * @param Exception $exception
-     * @return false
+     * @throws FailedException
      */
     private function retryFinishedAndFailed(Exception $exception = null)
     {
@@ -518,7 +520,7 @@ class Executor
 
         $this->log(null, null, $context);
 
-        return false;
+        throw new FailedException('Retrying unsuccessful', 0, $exception);
     }
 
     /*------------------------------------

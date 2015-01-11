@@ -5,12 +5,15 @@
 
 namespace Tebru\Executioner\Test;
 
+use BadMethodCallException;
 use Exception;
 use Mockery;
 use PHPUnit_Framework_TestCase;
 use Tebru\Executioner\Attemptor;
 use Tebru\Executioner\Attemptor\Invokeable;
 use Tebru\Executioner\Delegate\ExceptionDelegate;
+use Tebru\Executioner\Exception\FailedException;
+use Tebru\Executioner\Exception\TypeMismatchException;
 use Tebru\Executioner\Executor;
 use Tebru\Executioner\Strategy\AttemptAwareTerminationStrategy;
 use Tebru\Executioner\Strategy\TimeAwareTerminationStrategy;
@@ -99,7 +102,7 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException("\Exception")
+     * @expectedException Exception
      */
     public function testCanSetImmediatelyFailableException()
     {
@@ -171,7 +174,7 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException("\Exception")
+     * @expectedException Exception
      */
     public function testImmediatelyFailableException()
     {
@@ -184,7 +187,7 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException("\Exception")
+     * @expectedException Exception
      */
     public function testImmediatelyFailableExceptionWithLog()
     {
@@ -236,6 +239,9 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('test', $result);
     }
 
+    /**
+     * @expectedException \Tebru\Executioner\Exception\FailedException
+     */
     public function testWillFailAttemptAwareTerminationStrategyWithLog()
     {
         $attemptor = Mockery::mock(MockRetryableReturn::class);
@@ -277,6 +283,9 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('test', $result);
     }
 
+    /**
+     * @expectedException \Tebru\Executioner\Exception\FailedException
+     */
     public function testWillFailTimeAwareTerminationStrategyWithLog()
     {
         $attemptor = Mockery::mock(MockRetryableReturn::class);
@@ -302,7 +311,7 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \Exception
+     * @expectedException Exception
      */
     public function testExceptionNoValidHandlersThrowsException()
     {
@@ -316,7 +325,7 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \Exception
+     * @expectedException Exception
      */
     public function testExceptionNoValidHandlersThrowsExceptionWithLog()
     {
@@ -347,7 +356,7 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \BadMethodCallException
+     * @expectedException BadMethodCallException
      */
     public function testWillThrowExceptionWithoutAttemptor()
     {
