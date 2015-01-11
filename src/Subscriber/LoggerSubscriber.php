@@ -21,14 +21,14 @@ use Tebru\Executioner\Executor;
 class LoggerSubscriber implements EventSubscriberInterface
 {
     /**
-     * @var LoggerInterface $logger
-     */
-    private $logger;
-
-    /**
      * @var string $name
      */
     private $name;
+
+    /**
+     * @var LoggerInterface $logger
+     */
+    private $logger;
 
     /**
      * Constructor
@@ -36,10 +36,10 @@ class LoggerSubscriber implements EventSubscriberInterface
      * @param LoggerInterface $logger
      * @param string $name
      */
-    public function __construct(LoggerInterface $logger, $name)
+    public function __construct($name, LoggerInterface $logger)
     {
-        $this->logger = $logger;
         $this->name = $name;
+        $this->logger = $logger;
     }
 
     /**

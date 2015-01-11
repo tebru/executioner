@@ -72,7 +72,7 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $logger->shouldReceive('notice')->times(1)->with('Failed attempt for "test", retrying. 0 attempts remaining', ['exception' => $exception]);
         $logger->shouldReceive('error')->times(1)->with('Could not complete "test"', ['exception' => $dispatchException]);
 
-        $loggerSubscriber = new LoggerSubscriber($logger, 'test');
+        $loggerSubscriber = new LoggerSubscriber('test', $logger);
 
         $dispatcher = Mockery::mock(EventDispatcher::class);
         $dispatcher->makePartial();

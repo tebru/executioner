@@ -43,7 +43,7 @@ use Tebru\Executioner\Subscriber\WaitSubscriber;
 $waitStrategy = new \Tebru\Executioner\Strategy\WaitStrategy();
 
 $executor = new Executor();
-$executor->addSubscriber(WaitSubscriber($waitStrategy));
+$executor->addSubscriber(new WaitSubscriber($waitStrategy));
 $result = $executor->execute(2, function () { /* code that may throw an exception */ });
 ```
 
@@ -63,7 +63,7 @@ use Tebru\Executioner\Subscriber\LoggerSubscriber;
 $logger = new \Psr\Log\LoggerInterface(); // the only requirement is you need a ps-3 compatible logger
 
 $executor = new Executor();
-$executor->addSubscriber(LoggerSubscriber($logger, 'name of this logger to distinguish it in the logs'));
+$executor->addSubscriber(new LoggerSubscriber('name-of-this-logger-to-distinguish-it-in-the-logs', $logger));
 $result = $executor->execute(2, function () { /* code that may throw an exception */ });
 ```
 
@@ -76,6 +76,6 @@ use Tebru\Executioner;
 use Tebru\Executioner\Subscriber\ReturnSubscriber;
 
 $executor = new Executor();
-$executor->addSubscriber(ReturnSubscriber([false]));
+$executor->addSubscriber(new ReturnSubscriber([false]));
 $result = $executor->execute(2, function () { return false; });
 ```
