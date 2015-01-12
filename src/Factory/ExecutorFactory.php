@@ -44,7 +44,7 @@ class ExecutorFactory
             throw new InvalidArgumentException('Logger name and logger must both be set');
         }
 
-        if (!is_int($wait) && !$wait instanceof WaitStrategy) {
+        if (!is_null($wait) && !is_int($wait) && !$wait instanceof WaitStrategy) {
             throw new InvalidArgumentException('Wait must be an int or an instance of WaitStrategy');
         }
 
