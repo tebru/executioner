@@ -32,17 +32,13 @@ class ExecutorFactory
      * @param EventDispatcherInterface $eventDispatcher
      * @return Executor
      */
-    public function make(
+    public static function make(
         $loggerName = null,
         LoggerInterface $logger = null,
         $wait = null,
         EventDispatcherInterface $eventDispatcher = null
     ) {
         $executor = new Executor();
-
-        if (null !== $eventDispatcher) {
-            $executor->setDispatcher($eventDispatcher);
-        }
 
         if (!is_null($loggerName) xor !is_null($logger)) {
             throw new InvalidArgumentException('Logger name and logger must both be set');
@@ -53,19 +49,19 @@ class ExecutorFactory
         }
 
         if (!is_null($loggerName) && !is_null($logger)) {
-            $executor->addLogger($loggerName, $logger);
-        }
-
-        if (null === $wait) {
-            return $executor;
+            $executor->setLogger($loggerName, $logger);
         }
 
         if (is_int($wait)) {
-            $executor->addWait($wait);
+            $executor->setWait($wait);
         }
 
         if ($wait instanceof WaitStrategy) {
-            $executor->addWaitStrategy($wait);
+            $executor->setWaitStrategy($wait);
+        }
+
+        if (null !== $eventDispatcher) {
+            $executor->setDispatcher($eventDispatcher);
         }
 
         return $executor;

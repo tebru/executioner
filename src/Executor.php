@@ -59,6 +59,20 @@ class Executor
     private $eventDispatcher;
 
     /**
+     * Instance of logger subscriber
+     *
+     * @var LoggerSubscriber $loggerSubscriber
+     */
+    private $loggerSubscriber;
+
+    /**
+     * Instance of wait subscriber
+     *
+     * @var WaitSubscriber $waitSubscriber
+     */
+    private $waitSubscriber;
+
+    /**
      * Constructor
      *
      * Creates an EventDispatcher by default
@@ -109,41 +123,51 @@ class Executor
     }
 
     /**
-     * Add a LoggerSubscriber
+     * Sets a LoggerSubscriber
      *
      * @param string $name
      * @param LoggerInterface $logger
      * @return $this
      */
-    public function addLogger($name, LoggerInterface $logger)
+    public function setLogger($name, LoggerInterface $logger)
     {
-        $this->addSubscriber(new LoggerSubscriber($name, $logger));
+        if (null !== $this->loggerSubscriber) {
+            $this->eventDispatcher->removeSubscriber($this->loggerSubscriber);
+        }
+
+        $this->loggerSubscriber = new LoggerSubscriber($name, $logger);
+        $this->addSubscriber($this->loggerSubscriber);
 
         return $this;
     }
 
     /**
-     * Add a WaitSubscriber using a StaticWaitStrategy
+     * Sets a WaitSubscriber using a StaticWaitStrategy
      *
      * @param int $seconds
      * @return $this
      */
-    public function addWait($seconds)
+    public function setWait($seconds)
     {
-        $this->addSubscriber(new WaitSubscriber(new StaticWaitStrategy($seconds)));
+        $this->setWaitStrategy(new StaticWaitStrategy($seconds));
 
         return $this;
     }
 
     /**
-     * Add a WaitSubscriber using passed in WaitStrategy
+     * Sets a WaitSubscriber using passed in WaitStrategy
      *
      * @param WaitStrategy $waitStrategy
      * @return $this
      */
-    public function addWaitStrategy(WaitStrategy $waitStrategy)
+    public function setWaitStrategy(WaitStrategy $waitStrategy)
     {
-        $this->addSubscriber(new WaitSubscriber($waitStrategy));
+        if (null !== $this->waitSubscriber) {
+            $this->eventDispatcher->removeSubscriber($this->waitSubscriber);
+        }
+
+        $this->waitSubscriber = new WaitSubscriber($waitStrategy);
+        $this->addSubscriber($this->waitSubscriber);
 
         return $this;
     }
