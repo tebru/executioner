@@ -50,6 +50,10 @@ class Executor
     ];
 
     /**
+     * Event dispatcher
+     *
+     * The should not be shared between executors
+     *
      * @var EventDispatcherInterface $eventDispatcher
      */
     private $eventDispatcher;
@@ -58,16 +62,10 @@ class Executor
      * Constructor
      *
      * Creates an EventDispatcher by default
-     *
-     * @param EventDispatcherInterface $eventDispatcher
      */
-    public function __construct(EventDispatcherInterface $eventDispatcher = null)
+    public function __construct()
     {
-        if (null === $eventDispatcher) {
-            $eventDispatcher = new EventDispatcher();
-        }
-
-        $this->eventDispatcher = $eventDispatcher;
+        $this->eventDispatcher = new EventDispatcher();
     }
 
     /**
@@ -230,11 +228,13 @@ class Executor
      * Add a subscriber
      *
      * @param EventSubscriberInterface $subscriber
-     *
+     * @return $this
      */
     public function addSubscriber(EventSubscriberInterface $subscriber)
     {
         $this->eventDispatcher->addSubscriber($subscriber);
+
+        return $this;
     }
 
     /**
@@ -245,5 +245,18 @@ class Executor
     public function getDispatcher()
     {
         return $this->eventDispatcher;
+    }
+
+    /**
+     * Set the event dispatcher
+     *
+     * @param EventDispatcherInterface $eventDispatcher
+     * @return $this
+     */
+    public function setDispatcher(EventDispatcherInterface $eventDispatcher)
+    {
+        $this->eventDispatcher = $eventDispatcher;
+
+        return $this;
     }
 }

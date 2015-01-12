@@ -38,7 +38,11 @@ class ExecutorFactory
         $wait = null,
         EventDispatcherInterface $eventDispatcher = null
     ) {
-        $executor = new Executor($eventDispatcher);
+        $executor = new Executor();
+
+        if (null !== $eventDispatcher) {
+            $executor->setDispatcher($eventDispatcher);
+        }
 
         if (!is_null($loggerName) xor !is_null($logger)) {
             throw new InvalidArgumentException('Logger name and logger must both be set');

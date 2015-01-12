@@ -83,7 +83,8 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
         $dispatcher->shouldReceive('dispatch')->times(5)->passthru();
         $dispatcher->shouldReceive('addSubscriber')->times(1)->with($loggerSubscriber)->passthru();
 
-        $executor = new Executor($dispatcher);
+        $executor = new Executor();
+        $executor->setDispatcher($dispatcher);
         $executor->addSubscriber($loggerSubscriber);
         $executor->execute(1, $callable);
     }
