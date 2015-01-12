@@ -31,15 +31,25 @@ class LoggerSubscriber implements EventSubscriberInterface
     private $logger;
 
     /**
+     * @var string $uniqueId
+     */
+    private $uniqueId;
+
+    /**
      * Constructor
      *
-     * @param LoggerInterface $logger
      * @param string $name
+     * @param LoggerInterface $logger
+     * @param string $uniqueId
      */
-    public function __construct($name, LoggerInterface $logger)
+    public function __construct($name, LoggerInterface $logger, $uniqueId = null)
     {
+        if (null === $uniqueId) {
+            $uniqueId = uniqid();
+        }
         $this->name = $name;
         $this->logger = $logger;
+        $this->uniqueId = $uniqueId;
     }
 
     /**
@@ -77,7 +87,7 @@ class LoggerSubscriber implements EventSubscriberInterface
      */
     public function onBeforeAttempt(BeforeAttemptEvent $event)
     {
-        $this->logger->info(sprintf('Attempting "%s" with %d attempts to go.', $this->name, $event->getAttempts()));
+        $this->logger->info(sprintf('Attempting "%s" with %d attempts to go. (%s)', $this->name, $event->getAttempts(), $this->uniqueId));
     }
 
     /**
@@ -85,7 +95,7 @@ class LoggerSubscriber implements EventSubscriberInterface
      */
     public function onAfterAttempt(AfterAttemptEvent $event)
     {
-        $this->logger->info(sprintf('Completed attempt for "%s"', $this->name), ['result' => $event->getResult()]);
+        $this->logger->info(sprintf('Completed attempt for "%s" (%s)', $this->name, $this->uniqueId), ['result' => $event->getResult()]);
     }
 
     /**
@@ -94,7 +104,7 @@ class LoggerSubscriber implements EventSubscriberInterface
     public function onFailedAttempt(FailedAttemptEvent $event)
     {
         $this->logger->notice(
-            sprintf('Failed attempt for "%s", retrying. %d attempts remaining', $this->name, $event->getAttempts()),
+            sprintf('Failed attempt for "%s", retrying. %d attempts remaining (%s)', $this->name, $event->getAttempts(), $this->uniqueId),
             ['exception' => $event->getException()]
         );
     }
@@ -104,6 +114,6 @@ class LoggerSubscriber implements EventSubscriberInterface
      */
     public function onEndAttempt(EndAttemptEvent $event)
     {
-        $this->logger->error(sprintf('Could not complete "%s"', $this->name), ['exception' => $event->getException()]);
+        $this->logger->error(sprintf('Could not complete "%s" (%s)', $this->name, $this->uniqueId), ['exception' => $event->getException()]);
     }
 }

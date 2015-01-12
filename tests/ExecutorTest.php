@@ -69,13 +69,14 @@ class ExecutorTest extends PHPUnit_Framework_TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $dispatchException = new Exception();
-        $logger->shouldReceive('info')->times(1)->with('Attempting "test" with 1 attempts to go.');
-        $logger->shouldReceive('info')->times(1)->with('Attempting "test" with 0 attempts to go.');
-        $logger->shouldReceive('info')->times(1)->with('Completed attempt for "test"', ['result' => true])->andThrow($dispatchException);
-        $logger->shouldReceive('notice')->times(1)->with('Failed attempt for "test", retrying. 0 attempts remaining', ['exception' => $exception]);
-        $logger->shouldReceive('error')->times(1)->with('Could not complete "test"', ['exception' => $dispatchException]);
 
-        $loggerSubscriber = new LoggerSubscriber('test', $logger);
+        $logger->shouldReceive('info')->times(1)->with('Attempting "test" with 1 attempts to go. (uq)');
+        $logger->shouldReceive('info')->times(1)->with('Attempting "test" with 0 attempts to go. (uq)');
+        $logger->shouldReceive('info')->times(1)->with('Completed attempt for "test" (uq)', ['result' => true])->andThrow($dispatchException);
+        $logger->shouldReceive('notice')->times(1)->with('Failed attempt for "test", retrying. 0 attempts remaining (uq)', ['exception' => $exception]);
+        $logger->shouldReceive('error')->times(1)->with('Could not complete "test" (uq)', ['exception' => $dispatchException]);
+
+        $loggerSubscriber = new LoggerSubscriber('test', $logger, 'uq');
 
         $dispatcher = Mockery::mock(EventDispatcher::class);
         $dispatcher->makePartial();
