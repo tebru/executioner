@@ -5,7 +5,7 @@
 
 namespace Tebru\Executioner\Factory;
 
-use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Tebru\Executioner\Executor;
 
 /**
@@ -18,16 +18,16 @@ use Tebru\Executioner\Executor;
 class ExecutorFactory
 {
     /**
-     * @var EventDispatcher $eventDispatcher
+     * @var EventDispatcherInterface $eventDispatcher
      */
     private $eventDispatcher;
 
     /**
      * Constructor
      *
-     * @param EventDispatcher $eventDispatcher
+     * @param EventDispatcherInterface $eventDispatcher
      */
-    public function __construct(EventDispatcher $eventDispatcher = null)
+    public function __construct(EventDispatcherInterface $eventDispatcher = null)
     {
         $this->eventDispatcher = $eventDispatcher;
     }
@@ -35,10 +35,10 @@ class ExecutorFactory
     /**
      * Make an Executor
      *
-     * @param EventDispatcher $eventDispatcher
+     * @param EventDispatcherInterface $eventDispatcher
      * @return Executor
      */
-    public function make(EventDispatcher $eventDispatcher = null) {
+    public function make(EventDispatcherInterface $eventDispatcher = null) {
         if (null !== $eventDispatcher) {
             return new Executor($eventDispatcher);
         }
