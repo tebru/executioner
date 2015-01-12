@@ -23,21 +23,19 @@ class ExecutorFactory
     /**
      * Make an Executor
      *
-     * If adding a logger, both name and instance must be passed in.  If adding a wait, only
-     * time or the strategy may be passed in.
+     * If adding a logger, both name and instance must be passed in.  If adding a wait, it must
+     * be an int to represent seconds, or a WaitStrategy
      *
      * @param null $loggerName
      * @param LoggerInterface $logger
-     * @param int $waitTime
-     * @param WaitStrategy $waitStrategy
+     * @param int|WaitStrategy $wait WaitStrategy or wait time in seconds
      * @param EventDispatcherInterface $eventDispatcher
      * @return Executor
      */
     public function make(
         $loggerName = null,
         LoggerInterface $logger = null,
-        $waitTime = null,
-        WaitStrategy $waitStrategy = null,
+        $wait = null,
         EventDispatcherInterface $eventDispatcher = null
     ) {
         $executor = new Executor($eventDispatcher);
@@ -46,24 +44,24 @@ class ExecutorFactory
             throw new InvalidArgumentException('Logger name and logger must both be set');
         }
 
-        if (!is_null($waitTime) && !is_null($waitStrategy)) {
-            throw new InvalidArgumentException('Wait time and wait strategy cannot both be set');
+        if (!is_int($wait) && !$wait instanceof WaitStrategy) {
+            throw new InvalidArgumentException('Wait must be an int or an instance of WaitStrategy');
         }
 
         if (!is_null($loggerName) && !is_null($logger)) {
             $executor->addLogger($loggerName, $logger);
         }
 
-        if (is_null($waitTime) && is_null($waitStrategy)) {
+        if (null === $wait) {
             return $executor;
         }
 
-        if (null !== $waitTime) {
-            $executor->addWait($waitTime);
+        if (is_int($wait)) {
+            $executor->addWait($wait);
         }
 
-        if (null !== $waitStrategy) {
-            $executor->addWaitStrategy($waitStrategy);
+        if ($wait instanceof WaitStrategy) {
+            $executor->addWaitStrategy($wait);
         }
 
         return $executor;
