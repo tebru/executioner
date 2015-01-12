@@ -155,10 +155,10 @@ class Executor
      *
      * @param string $name
      */
-    public function setLoggerName($name)
+    public function updateLoggerName($name)
     {
         if (null === $this->logger) {
-            throw new LogicException('Cannot set logger name without an existing logger.  Please use setLogger()');
+            throw new LogicException('Cannot update logger name without an existing logger.  Please use setLogger()');
         }
 
         $this->setLogger($name, $this->logger);
