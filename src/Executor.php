@@ -6,6 +6,7 @@
 namespace Tebru\Executioner;
 
 use Exception;
+use LogicException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -57,6 +58,13 @@ class Executor
      * @var EventDispatcherInterface $eventDispatcher
      */
     private $eventDispatcher;
+
+    /**
+     * Instance of logger
+     *
+     * @var LoggerInterface $logger
+     */
+    private $logger;
 
     /**
      * Instance of logger subscriber
@@ -135,10 +143,25 @@ class Executor
             $this->eventDispatcher->removeSubscriber($this->loggerSubscriber);
         }
 
+        $this->logger = $logger;
         $this->loggerSubscriber = new LoggerSubscriber($name, $logger);
         $this->addSubscriber($this->loggerSubscriber);
 
         return $this;
+    }
+
+    /**
+     * Shortcut for setLogger if a logger already exists
+     *
+     * @param string $name
+     */
+    public function setLoggerName($name)
+    {
+        if (null === $this->logger) {
+            throw new LogicException('Cannot set logger name without an existing logger.  Please use setLogger()');
+        }
+
+        $this->setLogger($name, $this->logger);
     }
 
     /**
